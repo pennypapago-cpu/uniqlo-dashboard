@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>èµ·å£«å¬çµ ååºéå¸çéåè¡¨æ¿</title>
+    <title>起士公爵 四店門市營運儀表板</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <style>
@@ -491,7 +491,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>ð§ èµ·å£«å¬çµ ååºéå¸çéåè¡¨æ¿</h1>
+            <h1>🧀 起士公爵 四店門市營運儀表板</h1>
             <p>Duke of Cheese 4-Store Operations Dashboard</p>
         </div>
 
@@ -499,20 +499,20 @@
         <div class="controls">
             <div class="controls-row">
                 <div class="control-group">
-                    <label>éå§æ¥æ:</label>
+                    <label>開始日期:</label>
                     <input type="date" id="startDate">
                 </div>
                 <div class="control-group">
-                    <label>çµææ¥æ:</label>
+                    <label>結束日期:</label>
                     <input type="date" id="endDate">
                 </div>
                 <div class="control-group">
-                    <label>å¿«éé¸æ:</label>
+                    <label>快速選擇:</label>
                     <div class="quick-buttons">
-                        <button class="quick-btn" data-preset="7d">è¿7å¤©</button>
-                        <button class="quick-btn" data-preset="mtd">æ¬æè³ä»</button>
-                        <button class="quick-btn" data-preset="30d">è¿30å¤©</button>
-                        <button class="quick-btn active" data-preset="ytd">å¹´åè³ä»</button>
+                        <button class="quick-btn" data-preset="7d">近7天</button>
+                        <button class="quick-btn" data-preset="mtd">本月至今</button>
+                        <button class="quick-btn" data-preset="30d">近30天</button>
+                        <button class="quick-btn active" data-preset="ytd">年初至今</button>
                     </div>
                 </div>
             </div>
@@ -520,10 +520,10 @@
 
         <!-- Store Tabs -->
         <div class="store-tabs">
-            <button class="store-tab active" data-store="all">å¨é¨éå¸</button>
-            <button class="store-tab" data-store="äº¬ç«">äº¬ç«</button>
-            <button class="store-tab" data-store="æ±æ©">æ±æ©</button>
-            <button class="store-tab" data-store="è¥¿é">è¥¿é</button>
+            <button class="store-tab active" data-store="all">全部門市</button>
+            <button class="store-tab" data-store="京站">京站</button>
+            <button class="store-tab" data-store="東橋">東橋</button>
+            <button class="store-tab" data-store="西門">西門</button>
             <button class="store-tab" data-store="A11">A11</button>
         </div>
 
@@ -532,32 +532,32 @@
 
         <!-- AI Coach Section -->
         <div class="ai-coach-section">
-            <div class="ai-coach-header">ðï¸ AI æç·´æ¨¡å¼</div>
+            <div class="ai-coach-header">🏋️ AI 教練模式</div>
             <div class="coach-stores" id="coachStores"></div>
         </div>
 
         <!-- Charts -->
         <div class="charts-section">
             <div class="chart-container">
-                <h3>ð äº¤æè¶¨å¢</h3>
+                <h3>📈 交易趨勢</h3>
                 <div class="chart-inner">
                     <canvas id="trendChart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
-                <h3>ð¥ æ°èå®¢æ¯è¼</h3>
+                <h3>👥 新舊客比較</h3>
                 <div class="chart-inner">
                     <canvas id="customerChart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
-                <h3>ð° éå¸çæ¶åå¸</h3>
+                <h3>💰 門市營收分布</h3>
                 <div class="chart-inner">
                     <canvas id="revenueChart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
-                <h3>â­ çéç¸¾æé·éå</h3>
+                <h3>⭐ 營運績效雷達圖</h3>
                 <div class="chart-inner">
                     <canvas id="radarChart"></canvas>
                 </div>
@@ -566,7 +566,7 @@
 
         <!-- Data Table -->
         <div class="table-section">
-            <h3>ð è©³ç´°æ¸æå°æ¯</h3>
+            <h3>📊 詳細數據對比</h3>
             <table id="dataTable">
                 <thead>
                     <tr id="tableHeader"></tr>
@@ -577,11 +577,11 @@
 
         <!-- AI Chat -->
         <div class="chat-section">
-            <h3>ð¬ AI åç­</h3>
+            <h3>💬 AI 問答</h3>
             <div class="chat-container" id="chatContainer"></div>
             <div class="chat-input-group">
-                <input type="text" id="chatInput" placeholder="è«æåºæ¨çåé¡..." />
-                <button onclick="handleChatSubmit()">ç¼é</button>
+                <input type="text" id="chatInput" placeholder="請提出您的問題..." />
+                <button onclick="handleChatSubmit()">發送</button>
             </div>
         </div>
     </div>
@@ -591,15 +591,15 @@
 
         // Revenue data (RAW) - indexed 0-83 for first 84 days
         const revenueData = {
-            'äº¬ç«': {
+            '京站': {
                 y26: [18000,19500,17800,16500,19200,12800,15600,18000,21600,27800,23400,19200,14400,16500,14400,20700,31200,28200,16500,18600,17100,13200,21600,23400,22500,11700,13500,19800,24300,27000,32400,26100,12600,21600,17100,18000,31500,47700,39600,18900,16200,28800,38700,50400,40500,36900,27000,37800,41400,29700,21600,28800,27000,21600,16200,20700,27900,19800,32400,19800,16200,10800,13500,7200,36900,33300,27000,12600,13500,22500,10800,18000,31500,15300,11700,13500,21600,21600,27900,26100,23400,9900],
                 y25: [15000,16200,14700,13800,15900,10800,12600,15300,17700,22500,18900,15600,11700,13200,11700,16800,25200,22800,13500,15000,14100,10800,17400,19200,18000,9900,11100,16200,19800,21600,26100,21000,10200,17400,13800,14400,25200,38400,31800,15300,13200,23400,31200,40800,32400,29700,21600,30600,33300,24000,17400,23400,21600,17400,13200,16500,22500,15900,26100,15900,13200,8700,10800,5700,29700,26700,21600,10200,10800,18000,8700,14400,25200,12300,9300,10800,17400,17400,22500,21000,18900,7800]
             },
-            'æ±æ©': {
+            '東橋': {
                 y26: [11200,7200,13600,15200,9600,16000,12000,18400,11200,12000,11200,13600,16800,13600,17600,14400,16800,19200,10400,16800,9600,12000,16800,10400,13600,10400,6400,12800,10400,16800,12000,11200,8800,9600,15200,12800,14400,20000,16000,14400,16000,24000,21600,27200,20800,24800,14400,18400,17600,8800,4800,16000,12800,18400,19200,10400,12000,7200,11200,11200,10400,9600,14400,7200,8800,12000,11200,15200,6400,19200,12800,8800,11200,18400,10400,8800,8800],
                 y25: [9600,6000,11200,12800,8000,13600,10400,15200,9600,10400,9600,11200,14400,11200,14800,12000,14400,16000,8800,14400,8000,10400,14400,8800,11200,8800,5200,10800,8800,14400,10400,9600,7200,8000,12800,10800,12000,16800,13600,12000,13600,20000,18400,23200,17600,21200,12000,15600,14800,7200,4000,13600,10800,15600,16400,8800,10400,6000,9600,9600,8800,8000,12000,6000,7200,10400,9600,12800,5200,16000,10800,7200,9600,15600,8800,7200,7200]
             },
-            'è¥¿é': {
+            '西門': {
                 y26: [11700,24000,22400,17600,11200,12000,9600,16000,16800,18400,20800,8800,8000,8800,12800,15200,31200,16000,9600,9600,6400,15200,18400,22400,19200,15200,9600,16000,14400,12800,19200,16800,11200,16800,8800,13600,21600,30400,29600,15200,24000,19200,26400,0,35200,30400,33600,46400,30400,29600,32800,17600,19200,8000,8000,14400,15200,15200,19200,19200,8000,9600,14400,7200,16000,22400,12800,8000,10400,12000,12800,13600,20800,16000,6400,9600,16800,8800,16000,26400,12000,11200],
                 y25: [10000,20000,18800,14800,9200,10400,8000,13600,14000,15600,17600,7200,6400,7200,10400,12800,26000,13600,8000,8000,5200,12800,15200,18800,16000,12800,8000,13600,12000,10400,16000,14000,9200,14000,7200,11200,18000,25200,24800,12800,20000,16000,22000,0,29200,25200,28000,38400,25200,24800,27200,14400,16000,6400,6400,12000,12800,12800,16000,16000,6400,8000,12000,6000,13200,18400,10400,6400,8400,10000,10400,11200,17200,13200,5200,8000,14000,7200,13200,22000,10000,9200]
             },
@@ -611,7 +611,7 @@
 
         // Operations data - keyed by date string like "1/1", "1/2", etc.
         const operationsData = {
-            'äº¬ç«': {
+            '京站': {
                 dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/16","2/17","2/18","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20","3/21","3/22","3/23"],
                 txn: [21,22,19,20,22,13,18,20,27,36,30,20,16,18,16,23,41,36,20,23,21,16,26,28,28,13,15,22,27,31,36,29,14,24,19,20,35,53,44,21,18,32,43,56,45,41,30,42,46,33,24,32,30,24,18,23,31,22,36,22,19,12,15,8,41,37,30,14,15,25,12,20,35,17,13,15,24,24,31,29,26,11],
                 delivery: [1,1,4,1,4,2,5,4,5,5,3,0,1,4,0,0,3,5,3,1,2,1,4,3,2,1,4,3,4,2,4,1,1,2,3,0,0,1,3,0,1,2,3,5,7,6,5,8,6,1,6,9,8,2,3,2,5,3,0,1,3,1,3,2,5,6,6,2,2,3,2,2,4,0,1,2,5,0,4,2,5,2],
@@ -625,7 +625,7 @@
                 second: [13,11,7,7,13,5,11,7,11,16,12,6,3,7,5,13,17,11,4,8,8,3,7,11,9,4,5,11,9,10,11,12,3,8,5,6,15,24,18,5,9,12,12,23,17,14,12,16,20,10,6,9,7,5,3,6,5,8,16,7,5,3,3,4,16,13,9,5,5,10,4,6,14,5,3,6,6,8,12,8,10,5],
                 member: [5,6,5,7,4,4,4,4,7,13,5,5,6,3,5,6,12,7,8,5,3,4,6,5,8,3,5,5,6,8,9,5,3,7,5,4,9,11,11,6,4,9,11,15,8,5,7,6,10,4,5,8,6,7,2,5,3,4,5,3,2,3,3,1,6,4,5,2,5,8,2,5,6,3,3,2,6,2,2,6,3,3]
             },
-            'æ±æ©': {
+            '東橋': {
                 dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/18","3/19","3/20","3/21","3/22","3/23"],
                 txn: [14,9,17,19,12,20,15,23,14,15,14,17,21,17,22,18,21,24,13,21,12,15,21,13,17,13,8,16,13,21,15,14,11,12,19,16,18,25,20,18,20,30,27,34,26,31,18,23,22,11,6,20,16,23,24,13,15,9,14,14,13,12,18,9,11,15,14,19,8,24,16,11,14,23,13,11,11],
                 delivery: [4,4,4,6,4,6,7,4,2,2,3,6,7,7,6,4,2,4,3,8,0,3,4,2,2,3,2,4,5,2,1,3,4,2,3,1,1,3,3,3,3,7,3,4,6,4,5,7,2,2,2,2,0,4,3,1,0,1,0,4,3,0,4,2,1,0,1,5,1,4,5,2,5,4,1,2,0],
@@ -639,7 +639,7 @@
                 second: [5,3,10,7,3,9,3,6,3,5,7,3,4,3,6,5,5,6,3,3,2,3,5,5,5,2,3,3,6,4,6,3,2,1,5,4,2,7,3,2,3,7,3,3,7,8,3,3,7,2,1,6,1,3,5,3,3,1,2,1,5,3,1,2,0,5,1,5,1,3,3,1,5,8,3,3,0],
                 member: [4,1,4,3,3,5,2,5,2,5,4,2,4,2,4,3,5,5,4,3,2,2,3,2,5,2,2,3,2,4,5,2,1,3,3,3,3,5,4,3,5,5,5,8,4,6,4,3,3,2,1,5,3,2,4,3,4,2,3,1,2,4,3,2,2,3,3,2,2,4,3,3,2,3,2,3,0]
             },
-            'è¥¿é': {
+            '西門': {
                 dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/16","2/17","2/18","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20","3/21","3/22","3/23"],
                 txn: [13,30,28,22,14,15,12,20,21,23,26,11,10,11,16,19,39,20,12,12,8,19,23,28,24,19,12,20,18,16,24,21,14,21,11,17,27,38,37,19,30,24,33,0,44,38,42,58,38,37,41,22,24,10,10,18,19,19,24,24,10,12,18,9,20,28,16,10,13,15,16,17,26,20,8,12,21,11,20,33,15,14],
                 delivery: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,1,1,0,1,0,2,0,0,1,0,1,2,2,1],
@@ -719,7 +719,7 @@
 
         function getStoresForOperations(selectedStore) {
             if (selectedStore === 'all') {
-                return ['äº¬ç«', 'æ±æ©', 'è¥¿é', 'A11'];
+                return ['京站', '東橋', '西門', 'A11'];
             }
             return [selectedStore];
         }
@@ -845,27 +845,27 @@
                 const card = document.createElement('div');
                 card.className = 'kpi-card revenue';
                 card.innerHTML = `
-                    <div class="kpi-label">${store} çæ¶</div>
+                    <div class="kpi-label">${store} 營收</div>
                     <div class="kpi-value">NT$${(currentRevenue / 1000).toFixed(0)}K</div>
                     <div class="kpi-change ${yoyChange >= 0 ? 'positive' : 'negative'}">
-                        ${yoyChange >= 0 ? 'â' : 'â'} å¹´å¢ ${Math.abs(yoyChange)}%
+                        ${yoyChange >= 0 ? '↑' : '↓'} 年增 ${Math.abs(yoyChange)}%
                     </div>
                 `;
                 container.appendChild(card);
             }
 
             const operationsMetrics = [
-                { key: 'txn', label: 'ç¸½äº¤æç­æ¸' },
-                { key: 'delivery', label: 'å¤éç­æ¸' },
-                { key: 'addon', label: 'å è³¼è ç­ç¤å' },
-                { key: 'calcTxn', label: 'è¨ç®ç¨äº¤æç­æ¸' },
-                { key: 'avgPrice', label: 'å®¢å®å¹' },
-                { key: 'newCust', label: 'è³¼è²·ç­æ¸(æ°å®¢)' },
-                { key: 'oldCust', label: 'è³¼è²·ç­æ¸(èå®¢)' },
-                { key: 'counter', label: 'é æ«æ¸' },
-                { key: 'checkin', label: 'æå°æ¨' },
-                { key: 'second', label: 'å¤å¸¶ç¬¬äºä»¶' },
-                { key: 'member', label: 'ç¶æå¡' }
+                { key: 'txn', label: '總交易筆數' },
+                { key: 'delivery', label: '外送筆數' },
+                { key: 'addon', label: '加購蠟燭盤叉' },
+                { key: 'calcTxn', label: '計算用交易筆數' },
+                { key: 'avgPrice', label: '客單價' },
+                { key: 'newCust', label: '購買筆數(新客)' },
+                { key: 'oldCust', label: '購買筆數(舊客)' },
+                { key: 'counter', label: '靠櫃數' },
+                { key: 'checkin', label: '打地標' },
+                { key: 'second', label: '多帶第二件' },
+                { key: 'member', label: '綁會員' }
             ];
 
             for (const metric of operationsMetrics) {
@@ -918,7 +918,7 @@
                 const improvements = [];
                 const declines = [];
                 const metrics = ['txn', 'newCust', 'counter', 'second', 'member'];
-                const improvedMetricsDisplay = ['äº¤æç­æ¸', 'æ°å®¢', 'é æ«', 'å¤å¸¶ç¬¬äºä»¶', 'æå¡ç¶å®'];
+                const improvedMetricsDisplay = ['交易筆數', '新客', '靠櫃', '多帶第二件', '會員綁定'];
 
                 for (let i = 0; i < metrics.length; i++) {
                     const change = thisWeekData[metrics[i]] - lastWeekData[metrics[i]];
@@ -937,9 +937,9 @@
                 score = Math.max(0, Math.min(100, score));
 
                 const tasks = [
-                    'å®æææäº¤æè¨éçè¿½è¹¤',
-                    'å¢å æ°å®¢éç¼ 3 ç­',
-                    'æåæå¡ç¶å®ç 5%'
+                    '完成所有交易記錄的追蹤',
+                    '增加新客開發 3 筆',
+                    '提升會員綁定率 5%'
                 ];
 
                 coachCard.innerHTML = `
@@ -949,61 +949,61 @@
                     </h3>
 
                     <div class="coach-section">
-                        <div class="coach-subsection-title">ð æ¬é±æç¸¾å®</div>
+                        <div class="coach-subsection-title">📊 本週成績單</div>
                         <div class="coach-content">
                             <div class="coach-metric">
-                                <span class="metric-name">äº¤æç­æ¸:</span>
-                                <span>${thisWeekData.txn} ç­</span>
+                                <span class="metric-name">交易筆數:</span>
+                                <span>${thisWeekData.txn} 筆</span>
                             </div>
                             <div class="coach-metric">
-                                <span class="metric-name">æ°å®¢è³¼è²·:</span>
-                                <span>${thisWeekData.newCust} ç­</span>
+                                <span class="metric-name">新客購買:</span>
+                                <span>${thisWeekData.newCust} 筆</span>
                             </div>
                             <div class="coach-metric">
-                                <span class="metric-name">å¹³åå®¢å®å¹:</span>
+                                <span class="metric-name">平均客單價:</span>
                                 <span>NT$${thisWeekData.avgPrice}</span>
                             </div>
                             <div class="coach-metric">
-                                <span class="metric-name">æå¡ç¶å®:</span>
-                                <span>${thisWeekData.member} ç­</span>
+                                <span class="metric-name">會員綁定:</span>
+                                <span>${thisWeekData.member} 筆</span>
                             </div>
                         </div>
                     </div>
 
                     ${improvements.length > 0 ? `
                     <div class="coach-section">
-                        <div class="coach-subsection-title">ðª åå¾å¥½</div>
+                        <div class="coach-subsection-title">💪 做得好</div>
                         <div class="coach-content">
-                            ${improvements.map(imp => `<div class="coach-metric"><span class="metric-positive">â ${imp}</span></div>`).join('')}
+                            ${improvements.map(imp => `<div class="coach-metric"><span class="metric-positive">✓ ${imp}</span></div>`).join('')}
                         </div>
                     </div>
                     ` : ''}
 
                     ${declines.length > 0 ? `
                     <div class="coach-section">
-                        <div class="coach-subsection-title">â ï¸ éè¦æ¹å</div>
+                        <div class="coach-subsection-title">⚠️ 需要改善</div>
                         <div class="coach-content">
-                            ${declines.map(dec => `<div class="coach-metric"><span class="metric-negative">â ${dec}</span></div>`).join('')}
+                            ${declines.map(dec => `<div class="coach-metric"><span class="metric-negative">✗ ${dec}</span></div>`).join('')}
                         </div>
                     </div>
                     ` : ''}
 
                     <div class="coach-section">
-                        <div class="coach-subsection-title">ð¯ æ¬é±ä»»å</div>
+                        <div class="coach-subsection-title">🎯 本週任務</div>
                         <div class="coach-content">
                             ${tasks.map((task, idx) => `<div class="coach-metric">${idx + 1}. ${task}</div>`).join('')}
                         </div>
                     </div>
 
                     <div class="coach-section">
-                        <div class="coach-subsection-title">ð éé»KPIè¿½è¹¤</div>
+                        <div class="coach-subsection-title">📊 重點KPI追蹤</div>
                         <div class="coach-content">
                             <div class="coach-metric">
-                                <span class="metric-name">å®¢å®å¹ç®æ¨:</span>
+                                <span class="metric-name">客單價目標:</span>
                                 <span>NT$900+</span>
                             </div>
                             <div class="coach-metric">
-                                <span class="metric-name">æ°å®¢è½å:</span>
+                                <span class="metric-name">新客轉化:</span>
                                 <span>${((thisWeekData.newCust / thisWeekData.counter) * 100).toFixed(0)}%</span>
                             </div>
                         </div>
@@ -1101,12 +1101,12 @@
                     labels: stores,
                     datasets: [
                         {
-                            label: 'æ°å®¢',
+                            label: '新客',
                             data: newCustData,
                             backgroundColor: '#8B6914'
                         },
                         {
-                            label: 'èå®¢',
+                            label: '舊客',
                             data: oldCustData,
                             backgroundColor: '#C4A035'
                         }
@@ -1211,7 +1211,7 @@
             window.radarChart = new Chart(ctx, {
                 type: 'radar',
                 data: {
-                    labels: ['å®¢å®å¹ (NT$/10)', 'æ°å®¢ç (%)', 'èå®¢ç (%)', 'é æ«è½æ (%)', 'ç¬¬äºä»¶ç (%)', 'æå¡ç (%)'],
+                    labels: ['客單價 (NT$/10)', '新客率 (%)', '舊客率 (%)', '靠櫃轉換 (%)', '第二件率 (%)', '會員率 (%)'],
                     datasets: datasets
                 },
                 options: {
@@ -1238,7 +1238,7 @@
             const headerRow = document.getElementById('tableHeader');
             const bodyRows = document.getElementById('tableBody');
 
-            headerRow.innerHTML = '<th style="width: 200px;">ææ¨</th>';
+            headerRow.innerHTML = '<th style="width: 200px;">指標</th>';
             for (const store of stores) {
                 const th = document.createElement('th');
                 th.textContent = store;
@@ -1248,17 +1248,17 @@
             bodyRows.innerHTML = '';
 
             const metrics = [
-                { key: 'txn', label: 'ç¸½äº¤æç­æ¸' },
-                { key: 'delivery', label: 'å¤éç­æ¸' },
-                { key: 'addon', label: 'å è³¼è ç­ç¤å' },
-                { key: 'calcTxn', label: 'è¨ç®ç¨äº¤æç­æ¸' },
-                { key: 'avgPrice', label: 'å®¢å®å¹ (NT$)' },
-                { key: 'newCust', label: 'æ°å®¢è³¼è²·ç­æ¸' },
-                { key: 'oldCust', label: 'èå®¢è³¼è²·ç­æ¸' },
-                { key: 'counter', label: 'é æ«æ¸' },
-                { key: 'checkin', label: 'æå°æ¨' },
-                { key: 'second', label: 'å¤å¸¶ç¬¬äºä»¶' },
-                { key: 'member', label: 'ç¶æå¡' }
+                { key: 'txn', label: '總交易筆數' },
+                { key: 'delivery', label: '外送筆數' },
+                { key: 'addon', label: '加購蠟燭盤叉' },
+                { key: 'calcTxn', label: '計算用交易筆數' },
+                { key: 'avgPrice', label: '客單價 (NT$)' },
+                { key: 'newCust', label: '新客購買筆數' },
+                { key: 'oldCust', label: '舊客購買筆數' },
+                { key: 'counter', label: '靠櫃數' },
+                { key: 'checkin', label: '打地標' },
+                { key: 'second', label: '多帶第二件' },
+                { key: 'member', label: '綁會員' }
             ];
 
             for (const metric of metrics) {
@@ -1317,7 +1317,7 @@
 
             const q = question.toLowerCase();
 
-            if (q.includes('åªåéå¸') || q.includes('æå¥½') || q.includes('è¡¨ç¾')) {
+            if (q.includes('哪個門市') || q.includes('最好') || q.includes('表現')) {
                 let bestStore = stores[0];
                 let maxTxn = storeDataMap[bestStore].txn;
                 for (const store of stores) {
@@ -1326,38 +1326,38 @@
                         bestStore = store;
                     }
                 }
-                return `æ ¹æç¸¾è¨ï¼${bestStore}å¨æéå§äº¤æç­æ¸æå¤ï¼é${maxTxn}ç­ï¼æ´é«è¡¨ç¾æä½³ï¼`;
+                return `根據統計，${bestStore}在期間內交易筆數最多，達${maxTxn}筆，整體表現最佳！`;
             }
 
-            if (q.includes('å®¢å®å¹') || q.includes('å¹³å')) {
+            if (q.includes('客單價') || q.includes('平均')) {
                 const avgPrices = stores.map(s => storeDataMap[s].avgPrice);
                 const maxPrice = Math.max(...avgPrices);
                 const maxStore = stores[avgPrices.indexOf(maxPrice)];
-                return `${maxStore}å¨æ­¤æéçå®¢å®å¹æé«ï¼çºNT$${maxPrice}ãåéå¸å®¢å®å¹è¡¨ç¾ç©©å®ï¼å»ºè­°æçºåªåååæ­éã`;
+                return `${maxStore}在此期間的客單價最高，為NT$${maxPrice}。各門市客單價表現穩定，建議持續優化商品搭配。`;
             }
 
-            if (q.includes('æ°å®¢') || q.includes('å®¢æ¶')) {
+            if (q.includes('新客') || q.includes('客戶')) {
                 const newCustTotals = stores.map(s => storeDataMap[s].newCust);
                 const totalNewCust = newCustTotals.reduce((a, b) => a + b, 0);
-                return `æéå§ç¸½è¨å¸å¼${totalNewCust}ä½æ°å®¢è³¼è²·ãå»ºè­°å å¼·è¡é·æ¨å»£èå®¢æ¶é«é©ï¼æåæ°å®¢è¤è³·çã`;
+                return `期間內總計吸引${totalNewCust}位新客購買。建議加強行銷推廣與客戶體驗，提升新客複賷率。`;
             }
 
-            if (q.includes('æå¡')) {
+            if (q.includes('會員')) {
                 const memberTotal = stores.reduce((sum, s) => sum + storeDataMap[s].member, 0);
-                return `æéå§å±ç¶å®${memberTotal}åæå¡ãæå¡ç®¡çå°æåå®¢æ¶å¿ èª åº¦å¾éè¦ï¼å»ºè­°æçºæ¨è¡æå¡åªæ è¨ç«ã`;
+                return `期間內共続定${memberTotal}名會員。會員管理對提升客戶忠誠度很重要，建議持續推行會員優惠計畫。`;
             }
 
-            if (q.includes('çæ¶') || q.includes('æ¶å¥')) {
+            if (q.includes('營收') || q.includes('收入')) {
                 const indices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
                 let totalRevenue = 0;
                 for (const store of stores) {
                     const y26Values = revenueData[store].y26.slice(0, 84);
                     totalRevenue += indices.reduce((sum, idx) => sum + (y26Values[idx] || 0), 0);
                 }
-                return `æéå§ååºç¸½çæ¶çºNT$${(totalRevenue / 1000).toFixed(0)}Kãè«æçºéæ³¨ååºçéç¸¾æï¼åªåé·å®ç­ç¥ã`;
+                return `期間內四店總營攺為NT$${(totalRevenue / 1000).toFixed(0)}K。請持續關注各店營運績效，優化銷售策略。`;
             }
 
-            return 'æè¬æ¨çæåï¼æ ¹æç®åçæ¸æï¼æåççéçæ³æ´é«ç©©å®ãå¦æå·é«çç¸¾ææ¥è©¢ï¼æ­¡è¿ç¹¼çºæåï¼';
+            return '感謝您的提問！根據目前的數據，我們的營運狀況整體穩定。如有具體的績效查詢，歡迎繼續提問！';
         }
 
         // ============ INITIALIZATION ============
