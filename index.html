@@ -580,7 +580,7 @@
             <h3>💬 AI 問答</h3>
             <div class="chat-container" id="chatContainer"></div>
             <div class="chat-input-group">
-                <input type="text" id="chatInput" placeholder="請提出您的問題..." />
+                <input type="text" id="chatInput" placeholder="請提出您的問題..." onkeydown="if(event.key==='Enter'){handleChatSubmit();}" />
                 <button onclick="handleChatSubmit()">發送</button>
             </div>
         </div>
