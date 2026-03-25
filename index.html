@@ -1740,7 +1740,10 @@ function aggPS(item, ms, store) {
   return {r,q};
 }
 
-function mkItem(tag, tagClass, text){return '<div class="insight-item" onclick="this.classList.toggle(\\'selected\\')"><span class="insight-check"></span><span class="insight-tag '+tagClass+'">'+ tag +'</span> '+text+'</div>';}
+function mkItem(tag,tc,txt){
+var q=String.fromCharCode(39);
+return "<div class=\"insight-item\" onclick=\"this.classList.toggle("+q+"selected"+q+")\">"+"<span class=\"insight-check\"></span>"+"<span class=\"insight-tag "+tc+"\">"+tag+"</span> "+txt+"</div>";
+}
 function generateInsights(t10, combo, cats, store, ms) {
   var storeLabel = store === 'all' ? '全部門市' : store;
   var monthLabel = ms.length === 3 ? 'Q1全季' : ms.map(function(m){return m+'月';}).join('+');
@@ -3357,7 +3360,10 @@ function aggPS(item, ms, store) {
   return {r,q};
 }
 
-function mkItem(tag, tagClass, text){return '<div class="insight-item" onclick="this.classList.toggle(\\'selected\\')"><span class="insight-check"></span><span class="insight-tag '+tagClass+'">'+ tag +'</span> '+text+'</div>';}
+function mkItem(tag,tc,txt){
+var q=String.fromCharCode(39);
+return "<div class=\"insight-item\" onclick=\"this.classList.toggle("+q+"selected"+q+")\">"+"<span class=\"insight-check\"></span>"+"<span class=\"insight-tag "+tc+"\">"+tag+"</span> "+txt+"</div>";
+}
 function generateInsights(t10, combo, cats, store, ms) {
   var storeLabel = store === 'all' ? '全部門市' : store;
   var monthLabel = ms.length === 3 ? 'Q1全季' : ms.map(function(m){return m+'月';}).join('+');
