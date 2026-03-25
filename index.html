@@ -1750,43 +1750,40 @@ function generateInsights(t10, combo, cats, store, ms) {
   var fmt = function(n){return Math.round(n).toLocaleString();};
   var h = '';
 
-  // TOP 10 insights
   if(t10.length > 0) {
-    var total10 = t10.reduce(function(s,x){return s+x[1];},0);
-    var top1pct = Math.round(t10[0][1]/total10*100);
+    var total10 = t10.reduce(function(s,x){return s+x.r;},0);
+    var top1pct = Math.round(t10[0].r/total10*100);
     h = '';
-    h += mkItem('分析','tag-analysis','TOP1「'+t10[0][0]+'」佔前10營收 '+top1pct+'%'+(top1pct>30?' — 集中度偏高，需分散風險':' — 分佈尚健康'));
-    if(t10.length>=2 && t10[0][1]>t10[1][1]*1.5) h += mkItem('風險','tag-priority','TOP1 營收超過 TOP2 的 1.5 倍，若該品缺貨/退流行將重創業績，建議培養第二主力商品');
-    if(t10.length>=3) h += mkItem('行動','tag-action','建議將 TOP3 商品「'+t10[2][0]+'」放置收銀台旁或入口黃金位，提升曝光帶動銷量');
+    h += mkItem('分析','tag-analysis','TOP1「'+t10[0].n+'」佔前10營收 '+top1pct+'%'+(top1pct>30?' — 集中度偏高，需分散風險':' — 分佈尚健康'));
+    if(t10.length>=2 && t10[0].r>t10[1].r*1.5) h += mkItem('風險','tag-priority','TOP1 營收超過 TOP2 的 1.5 倍，若該品缺貨/退流行將重創業績，建議培養第二主力商品');
+    if(t10.length>=3) h += mkItem('行動','tag-action','建議將 TOP3 商品「'+t10[2].n+'」放置收銀台旁或入口黃金位，提升曝光帶動銷量');
     h += mkItem('行動','tag-action','針對 '+storeLabel+' 設定「本週主打」立牌，輪播前3名商品增加顧客認知');
     h += mkItem('行動','tag-action','分析 TOP10 商品的毛利率，優先推廣高毛利品項以提升整體利潤');
     document.getElementById('insightTop10Content').innerHTML = h;
   }
 
-  // Combo insights
   if(combo.length > 0) {
-    var comboTotal = combo.reduce(function(s,x){return s+x[1];},0);
-    var allTotal = t10.reduce(function(s,x){return s+x[1];},0) + comboTotal;
+    var comboTotal = combo.reduce(function(s,x){return s+x.r;},0);
+    var allTotal = t10.reduce(function(s,x){return s+x.r;},0) + comboTotal;
     var comboPct = allTotal>0 ? Math.round(comboTotal/allTotal*100) : 0;
     h = '';
     h += mkItem('分析','tag-analysis','組合禮盒佔總營收約 '+comboPct+'%'+(comboPct<25?' — 仍有成長空間，建議加強組合推廣':' — 佔比健康，持續維護'));
-    h += mkItem('行動','tag-action','冠軍禮盒「'+combo[0][0]+'」可製作專屬陳列區或搭配試吃活動提升轉換');
-    if(combo.length>=2) h += mkItem('行動','tag-action','將第2名「'+combo[1][0]+'」與當季新品搭配成限定組合，創造話題');
+    h += mkItem('行動','tag-action','冠軍禮盒「'+combo[0].n+'」可製作專屬陳列區或搭配試吃活動提升轉換');
+    if(combo.length>=2) h += mkItem('行動','tag-action','將第2名「'+combo[1].n+'」與當季新品搭配成限定組合，創造話題');
     h += mkItem('行動','tag-action','推出「企業贈禮 / 團購」方案，5盒以上享折扣，拓展 B2B 渠道');
     h += mkItem('下一步','tag-priority','本週內盤點禮盒庫存，確保暢銷款備貨充足，避免缺貨損失');
     document.getElementById('insightComboContent').innerHTML = h;
   }
 
-  // Category insights
   if(cats.length > 0) {
-    var catTotal = cats.reduce(function(s,x){return s+x[1];},0);
+    var catTotal = cats.reduce(function(s,x){return s+x.r;},0);
     h = '';
     var topCat = cats[0];
-    var topCatPct = Math.round(topCat[1]/catTotal*100);
-    h += mkItem('分析','tag-analysis','「'+topCat[0]+'」類佔營收 '+topCatPct+'%'+(topCatPct>45?' — 過度集中，建議發展其他品類':' — 品類結構合理'));
+    var topCatPct = Math.round(topCat.r/catTotal*100);
+    h += mkItem('分析','tag-analysis','「'+topCat.n+'」類佔營收 '+topCatPct+'%'+(topCatPct>45?' — 過度集中，建議發展其他品類':' — 品類結構合理'));
     if(cats.length>=3) {
       var smallCat = cats[cats.length-1];
-      h += mkItem('行動','tag-action','「'+smallCat[0]+'」類佔比最低，可設計「加購優惠」(如：蛋糕+'+smallCat[0]+' 折$30) 帶動銷量');
+      h += mkItem('行動','tag-action','「'+smallCat.n+'」類佔比最低，可設計「加購優惠」(如：蛋糕+'+smallCat.n+' 折$30) 帶動銷量');
     }
     h += mkItem('行動','tag-action','每週輪替一個品類做「本週之星」促銷，平衡各類營收佔比');
     h += mkItem('行動','tag-action','分析各品類毛利率，將高毛利品項優先推薦給門市人員做話術訓練');
@@ -1794,8 +1791,7 @@ function generateInsights(t10, combo, cats, store, ms) {
     document.getElementById('insightCatContent').innerHTML = h;
   }
 
-  // Overall strategy
-  var totalRev = t10.reduce(function(s,x){return s+x[1];},0) + (combo.length>0?combo.reduce(function(s,x){return s+x[1];},0):0);
+  var totalRev = t10.reduce(function(s,x){return s+x.r;},0) + (combo.length>0?combo.reduce(function(s,x){return s+x.r;},0):0);
   var monthlyAvg = ms.length>0 ? Math.round(totalRev/ms.length) : totalRev;
   h = '';
   h += mkItem('分析','tag-analysis',storeLabel+' '+monthLabel+' 平均月營收約 $'+fmt(monthlyAvg)+'，以此為基準設定下月目標 +10%');
