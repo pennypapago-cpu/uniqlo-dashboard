@@ -140,6 +140,26 @@
             border-color: #8B6914;
         }
 
+        /* Lever KPI Section */
+        .lever-kpi-section { margin-bottom: 30px; }
+        .lever-kpi-grid { display: flex; flex-direction: column; gap: 15px; }
+        .lever-formula { text-align: center; font-size: 1.1em; font-weight: 700; color: #8B6914; background: linear-gradient(135deg, #FFF8E7 0%, #FFF3D0 100%); padding: 12px 20px; border-radius: 12px; border: 2px dashed #C4A035; letter-spacing: 2px; }
+        .lever-card { background: white; padding: 20px 24px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 16px; border-left: 5px solid #C4A035; transition: transform 0.15s; }
+        .lever-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .lever-card-main { border-left-color: #8B6914; background: linear-gradient(135deg, #FFFDF5 0%, #FFF8E7 100%); }
+        .lever-icon { font-size: 2em; flex-shrink: 0; }
+        .lever-label { font-size: 0.85em; color: #888; font-weight: 600; }
+        .lever-value { font-size: 1.6em; font-weight: 800; color: #333; }
+        .lever-sub { font-size: 0.8em; font-weight: 600; }
+        .lever-sub.positive { color: #2E7D32; }
+        .lever-sub.negative { color: #C62828; }
+        .lever-desc { font-size: 0.75em; color: #aaa; font-style: italic; }
+        @media (min-width: 769px) {
+            .lever-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+            .lever-formula { grid-column: 1 / -1; }
+            .lever-card { flex-direction: column; text-align: center; gap: 8px; }
+        }
+
         /* KPI Cards Grid */
         .kpi-grid {
             display: grid;
@@ -540,14 +560,11 @@
             <div class="coach-stores" id="coachStores"></div>
         </div>
 
+        <!-- 三大槓桿指標 -->
+        <div class="lever-kpi-section" id="leverKpiSection"></div>
+
         <!-- Charts -->
         <div class="charts-section">
-            <div class="chart-container">
-                <h3>📈 交易趨勢</h3>
-                <div class="chart-inner">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
             <div class="chart-container">
                 <h3>👥 新舊客比較</h3>
                 <div class="chart-inner">
@@ -1069,87 +1086,49 @@
         }
 
         function updateCharts() {
-            updateTrendChart();
+            updateLeverKPI();
             updateCustomerChart();
             updateRevenueChart();
             updateRadarChart();
         }
 
-        function updateTrendChart() {
-            const indices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+        function updateLeverKPI() {
+            const container = document.getElementById('leverKpiSection');
+            if (!container) return;
+            container.innerHTML = '';
             const stores = getStoresForOperations(dashboardState.selectedStore);
-            const datasets = [];
-            const colors = ['#8B6914', '#C4A035', '#E5A876', '#A67C2E'];
-
-            const dates = [];
-            for (let i = 0; i < Math.min(30, indices.length); i++) {
-                const d = new Date(dashboardState.startDate);
-                d.setDate(d.getDate() + i);
-                dates.push(`${d.getMonth() + 1}/${d.getDate()}`);
+            const revenueIndices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+            let totalRevenue = 0, totalTxn = 0, totalCounter = 0, totalAvgPriceSum = 0, totalAvgPriceCount = 0;
+            let ly_totalRevenue = 0;
+            for (const store of stores) {
+                const y26Rev = revenueIndices.reduce((s, idx) => s + (revenueData[store].y26[idx] || 0), 0);
+                const y25Rev = revenueIndices.reduce((s, idx) => s + (revenueData[store].y25[idx] || 0), 0);
+                totalRevenue += y26Rev; ly_totalRevenue += y25Rev;
+                const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+                totalTxn += data.txn; totalCounter += data.counter;
+                totalAvgPriceSum += data.avgPrice; totalAvgPriceCount++;
             }
-
-            for (let i = 0; i < stores.length; i++) {
-                const store = stores[i];
-                const range = getOperationsDataForRange(store, dashboardState.startDate, dashboardState.endDate);
-                const txnData = operationsData[store].txn.slice(range.startIdx, range.endIdx);
-
-                // 2026 今年實線
-                datasets.push({
-                    label: store + ' (2026)',
-                    data: txnData.slice(0, 30),
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: colors[i % colors.length] + '20',
-                    tension: 0.3,
-                    fill: false,
-                    borderWidth: 2
-                });
-
-                // 2025 去年同期虛線
-                const y25Revenue = revenueData[store].y25.slice(0, 84);
-                const y25Slice = indices.slice(0, 30).map(idx => {
-                    // 將營收轉為近似交易筆數（營收/平均客單價800）方便同圖比較
-                    return idx < y25Revenue.length ? Math.round(y25Revenue[idx] / 800) : null;
-                });
-                datasets.push({
-                    label: store + ' (2025)',
-                    data: y25Slice,
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: 'transparent',
-                    tension: 0.3,
-                    fill: false,
-                    borderWidth: 1.5,
-                    borderDash: [6, 4],
-                    pointRadius: 0
-                });
+            const avgPrice = totalAvgPriceCount > 0 ? Math.round(totalAvgPriceSum / totalAvgPriceCount) : 0;
+            const conversionRate = totalCounter > 0 ? ((totalTxn / totalCounter) * 100).toFixed(1) : 0;
+            const revenueYoY = ly_totalRevenue > 0 ? ((totalRevenue - ly_totalRevenue) / ly_totalRevenue * 100).toFixed(1) : 0;
+            const cards = [
+                { icon: '💰', label: '總營收', value: 'NT$' + (totalRevenue >= 1000000 ? (totalRevenue / 10000).toFixed(0) + '萬' : (totalRevenue / 1000).toFixed(0) + 'K'), sub: '年增 ' + Math.abs(revenueYoY) + '%', positive: revenueYoY >= 0, desc: '最終結果' },
+                { icon: '👣', label: '來客數（靠櫃）', value: totalCounter.toLocaleString() + ' 人', sub: '', positive: true, desc: '市場吸引力' },
+                { icon: '🎯', label: '轉換率', value: conversionRate + '%', sub: totalTxn + ' 筆 / ' + totalCounter + ' 人', positive: parseFloat(conversionRate) >= 30, desc: '現場銷售力' },
+                { icon: '🛒', label: '客單價 (ATV)', value: 'NT$' + avgPrice.toLocaleString(), sub: '', positive: true, desc: '產品組合力' }
+            ];
+            let html = '<div class="lever-kpi-grid">';
+            html += '<div class="lever-formula">業績 = 來客數 × 轉換率 × 客單價</div>';
+            for (const card of cards) {
+                html += '<div class="lever-card ' + (card.label === '總營收' ? 'lever-card-main' : '') + '">';
+                html += '<div class="lever-icon">' + card.icon + '</div>';
+                html += '<div class="lever-label">' + card.label + '</div>';
+                html += '<div class="lever-value">' + card.value + '</div>';
+                if (card.sub) html += '<div class="lever-sub ' + (card.positive ? 'positive' : 'negative') + '">' + (card.positive ? '↑' : '↓') + ' ' + card.sub + '</div>';
+                html += '<div class="lever-desc">' + card.desc + '</div></div>';
             }
-
-            if (window._trendChartInst) {
-                window._trendChartInst.destroy();
-            }
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            window._trendChartInst = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function updateCustomerChart() {
@@ -1774,6 +1753,26 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
             border-color: #8B6914;
         }
 
+        /* Lever KPI Section */
+        .lever-kpi-section { margin-bottom: 30px; }
+        .lever-kpi-grid { display: flex; flex-direction: column; gap: 15px; }
+        .lever-formula { text-align: center; font-size: 1.1em; font-weight: 700; color: #8B6914; background: linear-gradient(135deg, #FFF8E7 0%, #FFF3D0 100%); padding: 12px 20px; border-radius: 12px; border: 2px dashed #C4A035; letter-spacing: 2px; }
+        .lever-card { background: white; padding: 20px 24px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 16px; border-left: 5px solid #C4A035; transition: transform 0.15s; }
+        .lever-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .lever-card-main { border-left-color: #8B6914; background: linear-gradient(135deg, #FFFDF5 0%, #FFF8E7 100%); }
+        .lever-icon { font-size: 2em; flex-shrink: 0; }
+        .lever-label { font-size: 0.85em; color: #888; font-weight: 600; }
+        .lever-value { font-size: 1.6em; font-weight: 800; color: #333; }
+        .lever-sub { font-size: 0.8em; font-weight: 600; }
+        .lever-sub.positive { color: #2E7D32; }
+        .lever-sub.negative { color: #C62828; }
+        .lever-desc { font-size: 0.75em; color: #aaa; font-style: italic; }
+        @media (min-width: 769px) {
+            .lever-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+            .lever-formula { grid-column: 1 / -1; }
+            .lever-card { flex-direction: column; text-align: center; gap: 8px; }
+        }
+
         /* KPI Cards Grid */
         .kpi-grid {
             display: grid;
@@ -2170,14 +2169,11 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
             <div class="coach-stores" id="coachStores"></div>
         </div>
 
+        <!-- 三大槓桿指標 -->
+        <div class="lever-kpi-section" id="leverKpiSection"></div>
+
         <!-- Charts -->
         <div class="charts-section">
-            <div class="chart-container">
-                <h3>📈 交易趨勢</h3>
-                <div class="chart-inner">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
             <div class="chart-container">
                 <h3>👥 新舊客比較</h3>
                 <div class="chart-inner">
@@ -2699,87 +2695,49 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
         }
 
         function updateCharts() {
-            updateTrendChart();
+            updateLeverKPI();
             updateCustomerChart();
             updateRevenueChart();
             updateRadarChart();
         }
 
-        function updateTrendChart() {
-            const indices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+        function updateLeverKPI() {
+            const container = document.getElementById('leverKpiSection');
+            if (!container) return;
+            container.innerHTML = '';
             const stores = getStoresForOperations(dashboardState.selectedStore);
-            const datasets = [];
-            const colors = ['#8B6914', '#C4A035', '#E5A876', '#A67C2E'];
-
-            const dates = [];
-            for (let i = 0; i < Math.min(30, indices.length); i++) {
-                const d = new Date(dashboardState.startDate);
-                d.setDate(d.getDate() + i);
-                dates.push(`${d.getMonth() + 1}/${d.getDate()}`);
+            const revenueIndices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+            let totalRevenue = 0, totalTxn = 0, totalCounter = 0, totalAvgPriceSum = 0, totalAvgPriceCount = 0;
+            let ly_totalRevenue = 0;
+            for (const store of stores) {
+                const y26Rev = revenueIndices.reduce((s, idx) => s + (revenueData[store].y26[idx] || 0), 0);
+                const y25Rev = revenueIndices.reduce((s, idx) => s + (revenueData[store].y25[idx] || 0), 0);
+                totalRevenue += y26Rev; ly_totalRevenue += y25Rev;
+                const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+                totalTxn += data.txn; totalCounter += data.counter;
+                totalAvgPriceSum += data.avgPrice; totalAvgPriceCount++;
             }
-
-            for (let i = 0; i < stores.length; i++) {
-                const store = stores[i];
-                const range = getOperationsDataForRange(store, dashboardState.startDate, dashboardState.endDate);
-                const txnData = operationsData[store].txn.slice(range.startIdx, range.endIdx);
-
-                // 2026 今年實線
-                datasets.push({
-                    label: store + ' (2026)',
-                    data: txnData.slice(0, 30),
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: colors[i % colors.length] + '20',
-                    tension: 0.3,
-                    fill: false,
-                    borderWidth: 2
-                });
-
-                // 2025 去年同期虛線
-                const y25Revenue = revenueData[store].y25.slice(0, 84);
-                const y25Slice = indices.slice(0, 30).map(idx => {
-                    // 將營收轉為近似交易筆數（營收/平均客單價800）方便同圖比較
-                    return idx < y25Revenue.length ? Math.round(y25Revenue[idx] / 800) : null;
-                });
-                datasets.push({
-                    label: store + ' (2025)',
-                    data: y25Slice,
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: 'transparent',
-                    tension: 0.3,
-                    fill: false,
-                    borderWidth: 1.5,
-                    borderDash: [6, 4],
-                    pointRadius: 0
-                });
+            const avgPrice = totalAvgPriceCount > 0 ? Math.round(totalAvgPriceSum / totalAvgPriceCount) : 0;
+            const conversionRate = totalCounter > 0 ? ((totalTxn / totalCounter) * 100).toFixed(1) : 0;
+            const revenueYoY = ly_totalRevenue > 0 ? ((totalRevenue - ly_totalRevenue) / ly_totalRevenue * 100).toFixed(1) : 0;
+            const cards = [
+                { icon: '💰', label: '總營收', value: 'NT$' + (totalRevenue >= 1000000 ? (totalRevenue / 10000).toFixed(0) + '萬' : (totalRevenue / 1000).toFixed(0) + 'K'), sub: '年增 ' + Math.abs(revenueYoY) + '%', positive: revenueYoY >= 0, desc: '最終結果' },
+                { icon: '👣', label: '來客數（靠櫃）', value: totalCounter.toLocaleString() + ' 人', sub: '', positive: true, desc: '市場吸引力' },
+                { icon: '🎯', label: '轉換率', value: conversionRate + '%', sub: totalTxn + ' 筆 / ' + totalCounter + ' 人', positive: parseFloat(conversionRate) >= 30, desc: '現場銷售力' },
+                { icon: '🛒', label: '客單價 (ATV)', value: 'NT$' + avgPrice.toLocaleString(), sub: '', positive: true, desc: '產品組合力' }
+            ];
+            let html = '<div class="lever-kpi-grid">';
+            html += '<div class="lever-formula">業績 = 來客數 × 轉換率 × 客單價</div>';
+            for (const card of cards) {
+                html += '<div class="lever-card ' + (card.label === '總營收' ? 'lever-card-main' : '') + '">';
+                html += '<div class="lever-icon">' + card.icon + '</div>';
+                html += '<div class="lever-label">' + card.label + '</div>';
+                html += '<div class="lever-value">' + card.value + '</div>';
+                if (card.sub) html += '<div class="lever-sub ' + (card.positive ? 'positive' : 'negative') + '">' + (card.positive ? '↑' : '↓') + ' ' + card.sub + '</div>';
+                html += '<div class="lever-desc">' + card.desc + '</div></div>';
             }
-
-            if (window._trendChartInst) {
-                window._trendChartInst.destroy();
-            }
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            window._trendChartInst = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function updateCustomerChart() {
