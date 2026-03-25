@@ -509,6 +509,43 @@
             font-size: 1.2em;
             padding: 20px;
         }
+
+        /* Product Sales Section */
+        .product-sales-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .product-sales-section h3 {
+            color: #8B6914;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .sales-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+        .sales-chart-box {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #eee;
+        }
+        .sales-chart-box h4 {
+            color: #8B6914;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        .sales-chart-inner {
+            position: relative;
+            height: 350px;
+        }
+        @media (max-width: 768px) {
+            .sales-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -585,7 +622,34 @@
             </div>
         </div>
 
-        <!-- Data Table -->
+        
+<!-- Product Sales Analysis Section -->
+<div class="product-sales-section" id="productSalesSection">
+  <h2 style="margin:0 0 8px 0;font-size:1.3rem;color:#1a1a2e;">📦 商品銷售分析 <span style="font-size:0.8rem;color:#888;font-weight:normal;">2026 Q1（1-3月）</span></h2>
+  <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">資料來源：起士公爵 ERP 銷售明細（排除運費/包材）</p>
+  <div class="sales-grid">
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">🏆 營收 TOP 10 商品</h3>
+      <div class="sales-chart-inner"><canvas id="topProductsChart"></canvas></div>
+    </div>
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">🎁 組合禮盒銷售排行</h3>
+      <div class="sales-chart-inner"><canvas id="comboProductsChart"></canvas></div>
+    </div>
+  </div>
+  <div class="sales-grid" style="margin-top:20px;">
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">📊 產品分類營收占比</h3>
+      <div class="sales-chart-inner"><canvas id="categoryChart"></canvas></div>
+    </div>
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">📈 關鍵數據摘要</h3>
+      <div id="salesSummaryBox" style="padding:15px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Table -->
         <div class="table-section">
             <h3>📊 詳細數據對比</h3>
             <table id="dataTable">
@@ -1609,6 +1673,184 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
             updateDashboard();
         });
     </script>
+
+<script>
+
+// ====== Product Sales Charts ======
+function initProductSalesCharts() {
+  const pData = {
+    top10: [{"n":"純粹原味乳酪蛋糕","r":1296810,"q":1953},{"n":"天使親吻輕乳酪蛋糕","r":856556,"q":2933},{"n":"綜合費雪(8入)","r":817856,"q":1441},{"n":"黃金萬兩鳳梨金磚(5入)","r":474034,"q":1146},{"n":"初戀草莓巴斯克(6吋)","r":427154,"q":618},{"n":"綜費-5款(5入)","r":405670,"q":880},{"n":"80厚藏生巧克力","r":335671,"q":1030},{"n":"草莓紅鑽費雪(5入)","r":311214,"q":757},{"n":"奶蓋開心果巴斯克(6吋)","r":305932,"q":454},{"n":"草莓玻尿酸生乳酪蛋糕","r":274882,"q":335}],
+    combo: [{"n":"綜合費雪(8入)","r":817856,"q":1441},{"n":"黃金萬兩鳳梨金磚(5入)","r":474034,"q":1146},{"n":"綜費-5款(5入)","r":405670,"q":880},{"n":"草莓紅鑽費雪(5入)","r":311214,"q":757},{"n":"綜合費雪-鳳+草(8入)","r":191499,"q":304}],
+    cats: [{"n":"蛋糕","r":3870000},{"n":"組合禮盒","r":2970000},{"n":"其他","r":1580000},{"n":"小公爵","r":768000},{"n":"巧克力","r":338000}]
+  };
+
+  // Top 10 Products - Horizontal Bar
+  const ctx1 = document.getElementById('topProductsChart');
+  if (ctx1) {
+    new Chart(ctx1.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: pData.top10.map(p => p.n),
+        datasets: [{
+          label: '營收 (NT$)',
+          data: pData.top10.map(p => p.r),
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#7BC8A4','#E7E9ED','#F7DC6F'],
+          borderRadius: 6,
+          barThickness: 22
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const item = pData.top10[ctx.dataIndex];
+                return 'NT$ ' + ctx.raw.toLocaleString() + '  (數量: ' + item.q + ')';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { callback: v => (v/10000).toFixed(0) + '萬' },
+            grid: { color: '#f0f0f0' }
+          },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // Combo Products Bar
+  const ctx2 = document.getElementById('comboProductsChart');
+  if (ctx2) {
+    new Chart(ctx2.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: pData.combo.map(p => p.n),
+        datasets: [
+          {
+            label: '營收 (NT$)',
+            data: pData.combo.map(p => p.r),
+            backgroundColor: '#36A2EB',
+            borderRadius: 6,
+            yAxisID: 'y'
+          },
+          {
+            label: '銷售數量',
+            data: pData.combo.map(p => p.q),
+            backgroundColor: '#FF9F40',
+            borderRadius: 6,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                if (ctx.dataset.label === '營收 (NT$)') return 'NT$ ' + ctx.raw.toLocaleString();
+                return ctx.raw + ' 組';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { font: { size: 10 }, maxRotation: 25 } },
+          y: {
+            type: 'linear', position: 'left',
+            ticks: { callback: v => (v/10000).toFixed(0) + '萬' },
+            grid: { color: '#f0f0f0' }
+          },
+          y1: {
+            type: 'linear', position: 'right',
+            ticks: { callback: v => v + '組' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Category Doughnut
+  const ctx3 = document.getElementById('categoryChart');
+  if (ctx3) {
+    const total = pData.cats.reduce((s,c) => s + c.r, 0);
+    new Chart(ctx3.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: pData.cats.map(c => c.n),
+        datasets: [{
+          data: pData.cats.map(c => c.r),
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF'],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 12 }, padding: 15 } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const pct = ((ctx.raw / total) * 100).toFixed(1);
+                return ctx.label + ': NT$ ' + ctx.raw.toLocaleString() + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Summary Box
+  const summaryBox = document.getElementById('salesSummaryBox');
+  if (summaryBox) {
+    const totalRev = pData.cats.reduce((s,c) => s + c.r, 0);
+    const topProduct = pData.top10[0];
+    const topCombo = pData.combo[0];
+    summaryBox.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #FF6384;">
+          <div style="font-size:0.8rem;color:#888;">Q1 總營收（算業績）</div>
+          <div style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">NT$ ${(totalRev/10000).toFixed(0)}萬</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #36A2EB;">
+          <div style="font-size:0.8rem;color:#888;">銷售冠軍</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#1a1a2e;">${topProduct.n}</div>
+          <div style="font-size:0.8rem;color:#666;">NT$ ${topProduct.r.toLocaleString()}</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #FFCE56;">
+          <div style="font-size:0.8rem;color:#888;">禮盒冠軍</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#1a1a2e;">${topCombo.n}</div>
+          <div style="font-size:0.8rem;color:#666;">NT$ ${topCombo.r.toLocaleString()}</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #4BC0C0;">
+          <div style="font-size:0.8rem;color:#888;">蛋糕類占比</div>
+          <div style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">${((pData.cats[0].r/totalRev)*100).toFixed(1)}%</div>
+        </div>
+      </div>
+    `;
+  }
+}
+// Call after DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initProductSalesCharts);
+} else {
+  initProductSalesCharts();
+}
+
+</script>
 </body>
 </html>
 <!DOCTYPE html>
@@ -2194,7 +2436,34 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
             </div>
         </div>
 
-        <!-- Data Table -->
+        
+<!-- Product Sales Analysis Section -->
+<div class="product-sales-section" id="productSalesSection">
+  <h2 style="margin:0 0 8px 0;font-size:1.3rem;color:#1a1a2e;">📦 商品銷售分析 <span style="font-size:0.8rem;color:#888;font-weight:normal;">2026 Q1（1-3月）</span></h2>
+  <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">資料來源：起士公爵 ERP 銷售明細（排除運費/包材）</p>
+  <div class="sales-grid">
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">🏆 營收 TOP 10 商品</h3>
+      <div class="sales-chart-inner"><canvas id="topProductsChart"></canvas></div>
+    </div>
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">🎁 組合禮盒銷售排行</h3>
+      <div class="sales-chart-inner"><canvas id="comboProductsChart"></canvas></div>
+    </div>
+  </div>
+  <div class="sales-grid" style="margin-top:20px;">
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">📊 產品分類營收占比</h3>
+      <div class="sales-chart-inner"><canvas id="categoryChart"></canvas></div>
+    </div>
+    <div class="sales-chart-box">
+      <h3 style="margin:0 0 10px 0;font-size:1rem;color:#333;">📈 關鍵數據摘要</h3>
+      <div id="salesSummaryBox" style="padding:15px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Table -->
         <div class="table-section">
             <h3>📊 詳細數據對比</h3>
             <table id="dataTable">
@@ -3028,5 +3297,183 @@ yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��
             updateDashboard();
         });
     </script>
+
+<script>
+
+// ====== Product Sales Charts ======
+function initProductSalesCharts() {
+  const pData = {
+    top10: [{"n":"純粹原味乳酪蛋糕","r":1296810,"q":1953},{"n":"天使親吻輕乳酪蛋糕","r":856556,"q":2933},{"n":"綜合費雪(8入)","r":817856,"q":1441},{"n":"黃金萬兩鳳梨金磚(5入)","r":474034,"q":1146},{"n":"初戀草莓巴斯克(6吋)","r":427154,"q":618},{"n":"綜費-5款(5入)","r":405670,"q":880},{"n":"80厚藏生巧克力","r":335671,"q":1030},{"n":"草莓紅鑽費雪(5入)","r":311214,"q":757},{"n":"奶蓋開心果巴斯克(6吋)","r":305932,"q":454},{"n":"草莓玻尿酸生乳酪蛋糕","r":274882,"q":335}],
+    combo: [{"n":"綜合費雪(8入)","r":817856,"q":1441},{"n":"黃金萬兩鳳梨金磚(5入)","r":474034,"q":1146},{"n":"綜費-5款(5入)","r":405670,"q":880},{"n":"草莓紅鑽費雪(5入)","r":311214,"q":757},{"n":"綜合費雪-鳳+草(8入)","r":191499,"q":304}],
+    cats: [{"n":"蛋糕","r":3870000},{"n":"組合禮盒","r":2970000},{"n":"其他","r":1580000},{"n":"小公爵","r":768000},{"n":"巧克力","r":338000}]
+  };
+
+  // Top 10 Products - Horizontal Bar
+  const ctx1 = document.getElementById('topProductsChart');
+  if (ctx1) {
+    new Chart(ctx1.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: pData.top10.map(p => p.n),
+        datasets: [{
+          label: '營收 (NT$)',
+          data: pData.top10.map(p => p.r),
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#7BC8A4','#E7E9ED','#F7DC6F'],
+          borderRadius: 6,
+          barThickness: 22
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const item = pData.top10[ctx.dataIndex];
+                return 'NT$ ' + ctx.raw.toLocaleString() + '  (數量: ' + item.q + ')';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { callback: v => (v/10000).toFixed(0) + '萬' },
+            grid: { color: '#f0f0f0' }
+          },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // Combo Products Bar
+  const ctx2 = document.getElementById('comboProductsChart');
+  if (ctx2) {
+    new Chart(ctx2.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: pData.combo.map(p => p.n),
+        datasets: [
+          {
+            label: '營收 (NT$)',
+            data: pData.combo.map(p => p.r),
+            backgroundColor: '#36A2EB',
+            borderRadius: 6,
+            yAxisID: 'y'
+          },
+          {
+            label: '銷售數量',
+            data: pData.combo.map(p => p.q),
+            backgroundColor: '#FF9F40',
+            borderRadius: 6,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                if (ctx.dataset.label === '營收 (NT$)') return 'NT$ ' + ctx.raw.toLocaleString();
+                return ctx.raw + ' 組';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { font: { size: 10 }, maxRotation: 25 } },
+          y: {
+            type: 'linear', position: 'left',
+            ticks: { callback: v => (v/10000).toFixed(0) + '萬' },
+            grid: { color: '#f0f0f0' }
+          },
+          y1: {
+            type: 'linear', position: 'right',
+            ticks: { callback: v => v + '組' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Category Doughnut
+  const ctx3 = document.getElementById('categoryChart');
+  if (ctx3) {
+    const total = pData.cats.reduce((s,c) => s + c.r, 0);
+    new Chart(ctx3.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: pData.cats.map(c => c.n),
+        datasets: [{
+          data: pData.cats.map(c => c.r),
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF'],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 12 }, padding: 15 } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const pct = ((ctx.raw / total) * 100).toFixed(1);
+                return ctx.label + ': NT$ ' + ctx.raw.toLocaleString() + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Summary Box
+  const summaryBox = document.getElementById('salesSummaryBox');
+  if (summaryBox) {
+    const totalRev = pData.cats.reduce((s,c) => s + c.r, 0);
+    const topProduct = pData.top10[0];
+    const topCombo = pData.combo[0];
+    summaryBox.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #FF6384;">
+          <div style="font-size:0.8rem;color:#888;">Q1 總營收（算業績）</div>
+          <div style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">NT$ ${(totalRev/10000).toFixed(0)}萬</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #36A2EB;">
+          <div style="font-size:0.8rem;color:#888;">銷售冠軍</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#1a1a2e;">${topProduct.n}</div>
+          <div style="font-size:0.8rem;color:#666;">NT$ ${topProduct.r.toLocaleString()}</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #FFCE56;">
+          <div style="font-size:0.8rem;color:#888;">禮盒冠軍</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#1a1a2e;">${topCombo.n}</div>
+          <div style="font-size:0.8rem;color:#666;">NT$ ${topCombo.r.toLocaleString()}</div>
+        </div>
+        <div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #4BC0C0;">
+          <div style="font-size:0.8rem;color:#888;">蛋糕類占比</div>
+          <div style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">${((pData.cats[0].r/totalRev)*100).toFixed(1)}%</div>
+        </div>
+      </div>
+    `;
+  }
+}
+// Call after DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initProductSalesCharts);
+} else {
+  initProductSalesCharts();
+}
+
+</script>
 </body>
 </html>
