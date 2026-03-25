@@ -388,6 +388,1640 @@
         }
 
         .chat-message {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background: #e8f4f8;
+            margin-left: 20px;
+            text-align: right;
+            color: #333;
+        }
+
+        .chat-message.assistant {
+            color: #444;
+            background: #fff4e6;
+            margin-right: 20px;
+            color: #555;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid #C4A035;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .chat-input-group button {
+            padding: 10px 20px;
+            background: #8B6914;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .chat-input-group button:hover {
+            background: #A67C2E;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                flex-direction: column;
+            }
+
+            .control-group label {
+                min-width: auto;
+            }
+
+            .quick-buttons {
+                flex-wrap: wrap;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .coach-stores {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.8em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: #8B6914;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧀 起士公爵 四店門市營運儀表板</h1>
+            <p>Duke of Cheese 4-Store Operations Dashboard</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label>開始日期:</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="control-group">
+                    <label>結束日期:</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="control-group">
+                    <label>快速選擇:</label>
+                    <div class="quick-buttons">
+                        <button class="quick-btn" data-preset="7d">近7天</button>
+                        <button class="quick-btn" data-preset="mtd">本月至今</button>
+                        <button class="quick-btn" data-preset="30d">近30天</button>
+                        <button class="quick-btn active" data-preset="ytd">年初至今</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Tabs -->
+        <div class="store-tabs">
+            <button class="store-tab active" data-store="all">全部門市</button>
+            <button class="store-tab" data-store="京站">京站</button>
+            <button class="store-tab" data-store="東橋">東橋</button>
+            <button class="store-tab" data-store="西門">西門</button>
+            <button class="store-tab" data-store="A11">A11</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <!-- AI Coach Section -->
+        <div class="ai-coach-section">
+            <div class="ai-coach-header">🏋️ AI 教練模式</div>
+            <div class="coach-stores" id="coachStores"></div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>📈 交易趨勢</h3>
+                <div class="chart-inner">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>👥 新舊客比較</h3>
+                <div class="chart-inner">
+                    <canvas id="customerChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>💰 門市營收分布</h3>
+                <div class="chart-inner">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>⭐ 營運績效雷達圖</h3>
+                <div class="chart-inner">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-section">
+            <h3>📊 詳細數據對比</h3>
+            <table id="dataTable">
+                <thead>
+                    <tr id="tableHeader"></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- AI Chat -->
+        <div class="chat-section">
+            <h3>💬 AI 營運教練</h3>
+            <div class="chat-container" id="chatContainer"></div>
+            <div class="chat-input-group">
+                <input type="text" id="chatInput" placeholder="問我如何提升業績，例：如何多帶第二件？" onkeydown="if(event.key==='Enter'){handleChatSubmit();}" />
+                <button onclick="handleChatSubmit()">發送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA SETUP ============
+
+        // Revenue data (RAW) - indexed 0-83 for first 84 days
+        const revenueData = {
+            '京站': {
+                y26: [18000,19500,17800,16500,19200,12800,15600,18000,21600,27800,23400,19200,14400,16500,14400,20700,31200,28200,16500,18600,17100,13200,21600,23400,22500,11700,13500,19800,24300,27000,32400,26100,12600,21600,17100,18000,31500,47700,39600,18900,16200,28800,38700,50400,40500,36900,27000,37800,41400,29700,21600,28800,27000,21600,16200,20700,27900,19800,32400,19800,16200,10800,13500,7200,36900,33300,27000,12600,13500,22500,10800,18000,31500,15300,11700,13500,21600,21600,27900,26100,23400,9900],
+                y25: [15000,16200,14700,13800,15900,10800,12600,15300,17700,22500,18900,15600,11700,13200,11700,16800,25200,22800,13500,15000,14100,10800,17400,19200,18000,9900,11100,16200,19800,21600,26100,21000,10200,17400,13800,14400,25200,38400,31800,15300,13200,23400,31200,40800,32400,29700,21600,30600,33300,24000,17400,23400,21600,17400,13200,16500,22500,15900,26100,15900,13200,8700,10800,5700,29700,26700,21600,10200,10800,18000,8700,14400,25200,12300,9300,10800,17400,17400,22500,21000,18900,7800]
+            },
+            '東橋': {
+                y26: [11200,7200,13600,15200,9600,16000,12000,18400,11200,12000,11200,13600,16800,13600,17600,14400,16800,19200,10400,16800,9600,12000,16800,10400,13600,10400,6400,12800,10400,16800,12000,11200,8800,9600,15200,12800,14400,20000,16000,14400,16000,24000,21600,27200,20800,24800,14400,18400,17600,8800,4800,16000,12800,18400,19200,10400,12000,7200,11200,11200,10400,9600,14400,7200,8800,12000,11200,15200,6400,19200,12800,8800,11200,18400,10400,8800,8800],
+                y25: [9600,6000,11200,12800,8000,13600,10400,15200,9600,10400,9600,11200,14400,11200,14800,12000,14400,16000,8800,14400,8000,10400,14400,8800,11200,8800,5200,10800,8800,14400,10400,9600,7200,8000,12800,10800,12000,16800,13600,12000,13600,20000,18400,23200,17600,21200,12000,15600,14800,7200,4000,13600,10800,15600,16400,8800,10400,6000,9600,9600,8800,8000,12000,6000,7200,10400,9600,12800,5200,16000,10800,7200,9600,15600,8800,7200,7200]
+            },
+            '西門': {
+                y26: [11700,24000,22400,17600,11200,12000,9600,16000,16800,18400,20800,8800,8000,8800,12800,15200,31200,16000,9600,9600,6400,15200,18400,22400,19200,15200,9600,16000,14400,12800,19200,16800,11200,16800,8800,13600,21600,30400,29600,15200,24000,19200,26400,0,35200,30400,33600,46400,30400,29600,32800,17600,19200,8000,8000,14400,15200,15200,19200,19200,8000,9600,14400,7200,16000,22400,12800,8000,10400,12000,12800,13600,20800,16000,6400,9600,16800,8800,16000,26400,12000,11200],
+                y25: [10000,20000,18800,14800,9200,10400,8000,13600,14000,15600,17600,7200,6400,7200,10400,12800,26000,13600,8000,8000,5200,12800,15200,18800,16000,12800,8000,13600,12000,10400,16000,14000,9200,14000,7200,11200,18000,25200,24800,12800,20000,16000,22000,0,29200,25200,28000,38400,25200,24800,27200,14400,16000,6400,6400,12000,12800,12800,16000,16000,6400,8000,12000,6000,13200,18400,10400,6400,8400,10000,10400,11200,17200,13200,5200,8000,14000,7200,13200,22000,10000,9200]
+            },
+            'A11': {
+                y26: [15200,19200,28800,16000,10400,14400,16800,19200,17600,19200,18400,20000,16000,12800,15200,23200,27200,22400,11200,16800,14400,13600,20000,23200,20000,14400,10400,11200,13600,23200,20800,20800,20000,11200,16800,16800,21600,36000,32800,19200,15200,24800,25600,31200,47200,36000,18400,29600,17600,22400,24000,20800,8800,11200,11200,18400,13600,25600,14400,15200,4800,9600,13600,8800,13600,23200,20800,10400,13600,8800,15200,23200,21600,22400,14400,10400,10400,15200,15200,22400,19200,9600],
+                y25: [12000,15600,23200,12800,8400,11600,13600,15600,14400,15600,15200,16000,13200,10400,12000,18800,22000,18000,9200,13600,11600,11000,16000,18800,16000,11600,8400,9200,10800,18800,16800,16800,16000,9200,13600,13600,17200,28800,26400,15600,12000,20000,20400,25000,38000,28800,14800,23600,14000,18000,19200,16800,7200,9200,9200,14800,10800,20400,11600,12000,3600,7600,10800,7000,10800,18400,16400,8400,10800,7200,12000,18400,17200,18000,11600,8400,8400,12000,12000,18000,15600,7800]
+            }
+        };
+
+        // Operations data - keyed by date string like "1/1", "1/2", etc.
+        const operationsData = {
+            '京站': {
+                dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/16","2/17","2/18","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20","3/21","3/22","3/23"],
+                txn: [21,22,19,20,22,13,18,20,27,36,30,20,16,18,16,23,41,36,20,23,21,16,26,28,28,13,15,22,27,31,36,29,14,24,19,20,35,53,44,21,18,32,43,56,45,41,30,42,46,33,24,32,30,24,18,23,31,22,36,22,19,12,15,8,41,37,30,14,15,25,12,20,35,17,13,15,24,24,31,29,26,11],
+                delivery: [1,1,4,1,4,2,5,4,5,5,3,0,1,4,0,0,3,5,3,1,2,1,4,3,2,1,4,3,4,2,4,1,1,2,3,0,0,1,3,0,1,2,3,5,7,6,5,8,6,1,6,9,8,2,3,2,5,3,0,1,3,1,3,2,5,6,6,2,2,3,2,2,4,0,1,2,5,0,4,2,5,2],
+                addon: [0,0,0,0,1,0,1,0,2,3,0,0,0,1,0,0,3,1,0,1,0,0,0,2,2,0,0,0,1,1,2,3,0,1,0,0,1,3,3,0,0,2,3,2,4,3,2,2,2,0,1,2,2,1,1,1,1,0,2,0,0,0,0,0,2,1,2,0,0,1,0,1,3,0,1,0,2,0,2,1,1,0],
+                calcTxn: [20,21,15,19,17,11,12,16,20,28,27,20,15,13,16,23,35,30,17,22,19,15,22,23,24,12,11,19,22,27,30,25,13,21,16,20,34,49,38,21,17,28,37,46,31,29,20,26,32,32,12,14,14,21,12,12,21,16,36,21,13,11,12,6,34,29,22,12,13,21,10,17,28,17,11,13,17,24,25,25,16,9],
+                avgPrice: [918,959,897,765,710,804,880,927,914,853,796,914,944,822,1024,864,855,801,834,916,771,1044,934,788,805,861,839,853,822,784,766,820,888,845,809,907,943,780,812,855,782,820,831,836,889,958,929,951,826,760,1061,1148,1136,823,913,932,872,907,775,812,967,876,886,980,923,854,859,801,804,751,847,815,775,988,937,855,860,767,809,781,997,803],
+                newCust: [13,16,11,19,10,6,8,10,13,22,19,11,11,6,10,11,23,22,13,15,14,11,14,17,17,5,6,11,14,18,22,17,8,14,9,11,22,30,25,12,10,19,25,33,23,18,15,18,26,19,8,10,11,14,6,8,13,11,24,14,10,5,7,4,26,20,12,7,8,13,6,9,18,7,6,7,13,12,17,16,12,6],
+                oldCust: [7,5,4,0,6,5,7,6,9,9,8,9,4,8,6,12,15,9,4,7,5,4,8,8,9,7,5,8,9,11,10,11,5,8,7,9,13,22,16,9,7,11,15,18,15,17,10,16,14,13,10,13,11,8,9,13,14,8,12,7,6,6,5,2,10,15,16,5,5,9,4,9,13,10,6,6,6,12,10,11,9,3],
+                counter: [29,32,19,30,25,20,21,26,32,47,39,31,19,21,25,34,49,45,26,38,28,26,32,35,38,19,18,26,33,38,43,41,17,30,27,31,48,65,54,30,27,41,55,72,50,54,40,52,51,49,28,38,34,30,24,27,35,26,39,30,28,16,21,11,49,44,33,18,23,31,16,25,43,22,18,22,30,28,38,36,29,16],
+                checkin: [0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+                second: [13,11,7,7,13,5,11,7,11,16,12,6,3,7,5,13,17,11,4,8,8,3,7,11,9,4,5,11,9,10,11,12,3,8,5,6,15,24,18,5,9,12,12,23,17,14,12,16,20,10,6,9,7,5,3,6,5,8,16,7,5,3,3,4,16,13,9,5,5,10,4,6,14,5,3,6,6,8,12,8,10,5],
+                member: [5,6,5,7,4,4,4,4,7,13,5,5,6,3,5,6,12,7,8,5,3,4,6,5,8,3,5,5,6,8,9,5,3,7,5,4,9,11,11,6,4,9,11,15,8,5,7,6,10,4,5,8,6,7,2,5,3,4,5,3,2,3,3,1,6,4,5,2,5,8,2,5,6,3,3,2,6,2,2,6,3,3]
+            },
+            '東橋': {
+                dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/18","3/19","3/20","3/21","3/22","3/23"],
+                txn: [14,9,17,19,12,20,15,23,14,15,14,17,21,17,22,18,21,24,13,21,12,15,21,13,17,13,8,16,13,21,15,14,11,12,19,16,18,25,20,18,20,30,27,34,26,31,18,23,22,11,6,20,16,23,24,13,15,9,14,14,13,12,18,9,11,15,14,19,8,24,16,11,14,23,13,11,11],
+                delivery: [4,4,4,6,4,6,7,4,2,2,3,6,7,7,6,4,2,4,3,8,0,3,4,2,2,3,2,4,5,2,1,3,4,2,3,1,1,3,3,3,3,7,3,4,6,4,5,7,2,2,2,2,0,4,3,1,0,1,0,4,3,0,4,2,1,0,1,5,1,4,5,2,5,4,1,2,0],
+                addon: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                calcTxn: [10,5,13,13,8,14,8,19,12,13,11,11,14,10,16,14,19,20,10,13,12,12,17,11,15,10,6,12,7,19,14,11,7,10,16,15,17,22,17,15,17,23,24,30,19,27,13,16,20,9,4,18,16,19,21,12,15,8,14,10,10,12,14,7,10,15,13,14,7,20,11,9,9,19,12,9,11],
+                avgPrice: [889,970,744,805,820,826,1055,789,750,838,882,917,799,880,789,899,875,828,834,782,831,1051,874,838,765,782,1022,801,860,785,826,857,975,879,749,752,918,779,852,833,804,752,869,823,870,842,782,764,891,932,938,684,847,852,766,920,806,888,805,910,897,843,767,793,843,878,786,817,959,769,852,835,877,790,821,901,904],
+                newCust: [4,1,7,6,3,6,3,12,6,7,6,5,8,5,5,8,13,13,4,8,5,6,7,3,7,5,3,6,3,10,10,4,3,6,7,8,10,12,10,9,10,12,13,17,10,14,6,9,14,4,1,8,7,10,12,6,9,5,8,3,5,8,8,3,5,8,6,5,2,11,4,4,3,7,6,4,1],
+                oldCust: [6,4,6,7,5,8,5,7,6,6,5,6,6,5,11,6,6,7,6,5,7,6,10,8,8,5,3,6,5,9,4,7,4,4,9,7,7,10,7,6,7,11,11,13,10,13,7,7,6,5,3,10,9,9,9,6,6,3,6,7,5,4,6,4,5,7,7,9,5,9,7,5,6,12,6,5,10],
+                counter: [14,7,15,17,12,16,12,22,14,15,14,14,18,14,20,17,22,23,12,17,14,14,22,14,16,12,8,14,11,22,16,14,10,12,18,16,18,25,19,17,19,27,27,33,23,31,16,19,22,11,6,20,19,21,24,14,17,10,15,12,13,14,17,9,12,17,15,16,9,22,13,11,11,21,14,11,13],
+                checkin: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                second: [5,3,10,7,3,9,3,6,3,5,7,3,4,3,6,5,5,6,3,3,2,3,5,5,5,2,3,3,6,4,6,3,2,1,5,4,2,7,3,2,3,7,3,3,7,8,3,3,7,2,1,6,1,3,5,3,3,1,2,1,5,3,1,2,0,5,1,5,1,3,3,1,5,8,3,3,0],
+                member: [4,1,4,3,3,5,2,5,2,5,4,2,4,2,4,3,5,5,4,3,2,2,3,2,5,2,2,3,2,4,5,2,1,3,3,3,3,5,4,3,5,5,5,8,4,6,4,3,3,2,1,5,3,2,4,3,4,2,3,1,2,4,3,2,2,3,3,2,2,4,3,3,2,3,2,3,0]
+            },
+            '西門': {
+                dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/16","2/17","2/18","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20","3/21","3/22","3/23"],
+                txn: [13,30,28,22,14,15,12,20,21,23,26,11,10,11,16,19,39,20,12,12,8,19,23,28,24,19,12,20,18,16,24,21,14,21,11,17,27,38,37,19,30,24,33,0,44,38,42,58,38,37,41,22,24,10,10,18,19,19,24,24,10,12,18,9,20,28,16,10,13,15,16,17,26,20,8,12,21,11,20,33,15,14],
+                delivery: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,1,1,0,1,0,2,0,0,1,0,1,2,2,1],
+                addon: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+                calcTxn: [13,30,28,22,14,15,12,20,21,23,26,11,10,11,16,19,39,20,12,12,8,19,23,28,24,19,12,20,18,16,24,21,14,21,11,17,27,38,37,19,30,24,33,0,44,38,42,58,38,37,41,22,24,10,10,18,19,19,24,24,10,12,17,9,18,28,16,8,11,13,16,15,26,16,8,12,20,11,18,29,11,13],
+                avgPrice: [914,790,840,1114,908,917,962,887,845,862,837,1068,960,1072,893,947,860,1100,1039,1134,1195,789,1098,770,1056,892,1101,883,851,1143,864,959,1205,837,1110,1154,874,883,905,931,948,974,980,0,968,840,857,806,912,858,863,999,858,1085,968,935,884,995,867,831,1029,982,906,913,979,832,947,1029,993,867,891,904,789,935,868,955,829,1128,917,788,993,831],
+                newCust: [6,18,16,14,8,6,5,10,13,14,12,5,3,4,5,8,18,11,3,5,3,12,13,17,14,10,5,13,7,5,10,8,4,8,3,7,15,24,21,11,14,7,13,0,23,19,22,33,18,20,23,8,14,4,3,7,7,11,11,12,4,5,6,3,8,14,5,3,7,6,7,5,10,6,3,5,7,3,6,13,4,8],
+                oldCust: [7,12,12,8,6,9,7,10,8,9,14,6,7,7,11,11,21,9,9,7,5,7,10,11,10,9,7,7,11,11,14,13,10,13,8,10,12,14,16,8,16,17,20,0,21,19,20,25,20,17,18,14,10,6,7,11,12,8,13,12,6,7,12,6,11,14,11,6,5,8,9,11,16,12,5,7,14,8,13,18,9,5],
+                counter: [19,36,34,29,15,17,16,23,26,30,29,14,12,14,22,22,43,23,15,15,10,25,29,35,29,23,16,23,21,18,28,25,18,24,13,19,29,42,41,21,34,29,37,0,49,42,46,62,40,41,45,28,29,13,13,20,22,22,28,28,14,16,22,11,22,32,19,11,14,19,19,20,31,22,10,14,24,14,22,36,17,16],
+                checkin: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                second: [6,14,16,11,8,7,3,9,7,10,9,5,5,3,2,9,16,9,2,2,2,3,5,8,8,3,3,5,7,7,8,4,4,6,2,7,12,18,12,7,12,13,15,0,21,18,16,28,16,16,16,9,8,6,3,4,8,9,8,4,3,3,4,3,6,8,5,3,3,3,5,5,10,5,2,3,9,3,5,10,2,5],
+                member: [3,9,8,6,3,3,3,4,5,5,9,2,2,3,4,5,10,7,2,3,3,5,5,7,5,4,3,4,3,3,7,3,2,4,3,2,5,7,4,3,7,3,5,0,6,7,6,11,7,6,4,4,3,2,2,3,3,3,6,4,2,2,2,2,2,5,4,2,3,2,3,3,5,4,2,2,3,2,4,4,2,3]
+            },
+            'A11': {
+                dates: ["1/1","1/2","1/3","1/4","1/5","1/6","1/7","1/8","1/9","1/10","1/11","1/12","1/13","1/14","1/15","1/16","1/17","1/18","1/19","1/20","1/21","1/22","1/23","1/24","1/25","1/26","1/27","1/28","1/29","1/30","1/31","2/1","2/2","2/3","2/4","2/5","2/6","2/7","2/8","2/9","2/10","2/11","2/12","2/13","2/14","2/15","2/16","2/17","2/18","2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20","3/21","3/22","3/23"],
+                txn: [19,24,36,20,13,18,21,24,22,24,23,25,20,16,19,29,34,28,14,21,18,17,25,29,25,18,13,14,17,29,26,26,25,14,21,21,27,45,41,24,19,31,32,39,59,45,23,37,22,28,30,26,11,14,14,23,17,32,18,19,6,12,17,11,17,29,26,13,17,11,19,29,27,28,18,13,13,19,19,28,24,12],
+                delivery: [1,4,5,1,1,3,6,4,2,5,2,9,2,4,4,4,3,3,4,3,2,2,0,2,3,4,2,1,3,2,4,2,0,1,3,1,2,2,4,0,2,0,2,3,10,3,1,1,1,0,2,0,1,0,5,9,1,5,3,4,1,2,3,1,5,6,4,5,0,3,4,5,2,5,3,0,1,1,2,6,0,2],
+                addon: [1,0,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+                calcTxn: [17,20,29,19,12,15,15,20,20,19,20,16,18,12,15,25,31,25,10,18,16,15,25,27,22,14,11,13,14,26,22,24,25,13,18,20,25,43,37,24,17,31,30,36,48,42,22,36,21,28,28,26,10,14,9,14,16,27,15,15,5,10,14,10,12,23,22,8,17,8,15,24,24,23,15,13,12,18,17,22,24,10],
+                avgPrice: [851,906,812,768,856,777,886,751,689,794,898,786,880,787,826,774,791,778,881,769,867,789,779,747,800,827,788,813,929,700,781,795,773,730,765,717,781,798,805,728,727,787,771,890,805,819,802,781,789,735,733,679,784,783,816,860,771,799,784,742,870,719,807,774,819,814,810,777,744,850,770,739,790,775,789,722,691,803,780,759,770,849],
+                newCust: [8,9,17,11,6,7,6,10,12,10,9,8,9,5,8,13,17,15,6,9,8,6,10,13,12,8,6,4,6,14,12,11,11,6,9,9,12,22,18,12,7,15,14,19,26,19,10,17,9,13,13,11,5,4,4,6,4,12,8,7,1,3,4,4,6,11,11,3,6,5,7,11,10,10,6,7,6,9,6,11,13,1],
+                oldCust: [10,11,14,8,6,8,9,10,8,9,12,8,9,7,7,12,14,10,4,9,8,9,15,14,10,6,5,9,8,13,10,13,14,7,9,11,13,21,19,12,10,16,16,17,23,23,12,19,12,15,15,15,5,10,5,8,12,15,7,8,4,7,10,6,6,12,11,5,11,3,8,13,15,13,9,6,6,9,11,11,11,9],
+                counter: [21,26,37,23,14,20,21,23,24,23,26,19,23,15,18,31,34,30,13,21,19,19,28,30,26,16,14,16,18,30,25,27,28,16,21,23,28,46,41,28,20,35,34,39,53,46,27,41,24,31,32,28,12,16,11,18,19,31,18,19,7,14,18,12,15,27,27,11,19,11,18,29,28,27,18,16,15,21,20,26,28,12],
+                checkin: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                second: [7,7,11,7,5,8,5,8,5,5,5,6,4,7,4,8,9,5,3,6,5,2,5,9,6,4,3,3,5,9,7,8,5,3,2,4,7,13,10,4,5,6,7,7,15,12,5,10,4,8,7,6,3,3,2,5,3,7,5,4,2,2,6,2,3,7,4,2,5,2,2,5,5,4,6,3,1,5,5,7,5,2],
+                member: [3,5,6,3,2,3,5,3,3,4,3,2,2,2,3,3,3,3,1,3,2,2,5,5,4,3,2,2,2,5,3,5,6,2,3,4,7,8,6,6,3,7,5,7,8,8,3,6,3,4,4,3,1,3,2,4,3,5,3,4,1,2,2,2,1,5,3,1,2,0,3,5,3,4,2,1,1,3,1,3,4,1]
+            }
+        };
+
+        // ============ UTILITY FUNCTIONS ============
+
+        function getDateRange(startDate, endDate) {
+            const dates = [];
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                dates.push(new Date(currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dates;
+        }
+
+        function getIndicesForDateRange(startDate, endDate) {
+            const indices = [];
+            const dates = getDateRange(startDate, endDate);
+            for (const date of dates) {
+                const dayOfYear = Math.floor((date - new Date(2026, 0, 1)) / (1000 * 60 * 60 * 24));
+                if (dayOfYear >= 0 && dayOfYear <= 83) {
+                    indices.push(dayOfYear);
+                }
+            }
+            return indices;
+        }
+
+        function getOperationsDataForRange(storeName, startDate, endDate) {
+            const store = operationsData[storeName];
+            if (!store) return { startIdx: 0, endIdx: 0 };
+
+            const allDates = store.dates;
+
+            const startIdx = allDates.findIndex(d => {
+                const [m, dy] = d.split('/').map(Number);
+                const ds = new Date(2026, m - 1, dy);
+                return ds >= startDate;
+            });
+
+            const endIdx = allDates.findIndex(d => {
+                const [m, dy] = d.split('/').map(Number);
+                const ds = new Date(2026, m - 1, dy);
+                return ds > endDate;
+            });
+
+            return {
+                startIdx: Math.max(0, startIdx),
+                endIdx: endIdx === -1 ? allDates.length : endIdx
+            };
+        }
+
+        function getStoresForOperations(selectedStore) {
+            if (selectedStore === 'all') {
+                return ['京站', '東橋', '西門', 'A11'];
+            }
+            return [selectedStore];
+        }
+
+        function sumOperationsMetrics(storeName, startDate, endDate) {
+            const store = operationsData[storeName];
+            if (!store) return null;
+
+            const range = getOperationsDataForRange(storeName, startDate, endDate);
+            const result = {};
+
+            const metricKeys = ['txn', 'delivery', 'addon', 'calcTxn', 'avgPrice', 'newCust', 'oldCust', 'counter', 'checkin', 'second', 'member'];
+
+            for (const key of metricKeys) {
+                if (key === 'avgPrice') {
+                    const totalCalcTxn = store.calcTxn.slice(range.startIdx, range.endIdx).reduce((a, b) => a + b, 0);
+                    const totalRevenue = store.calcTxn.slice(range.startIdx, range.endIdx).reduce((sum, txn, idx) => {
+                        return sum + (txn * store.avgPrice[range.startIdx + idx]);
+                    }, 0);
+                    result[key] = totalCalcTxn > 0 ? Math.round(totalRevenue / totalCalcTxn) : 0;
+                } else {
+                    result[key] = store[key].slice(range.startIdx, range.endIdx).reduce((a, b) => a + b, 0);
+                }
+            }
+
+            return result;
+        }
+
+        // ============ STATE MANAGEMENT ============
+
+        let dashboardState = {
+            startDate: new Date(2026, 0, 1),
+            endDate: new Date(2026, 2, 23),
+            selectedStore: 'all'
+        };
+
+        // ============ EVENT LISTENERS ============
+
+        document.getElementById('startDate').addEventListener('change', (e) => {
+            dashboardState.startDate = new Date(e.target.value);
+            updateDashboard();
+        });
+
+        document.getElementById('endDate').addEventListener('change', (e) => {
+            dashboardState.endDate = new Date(e.target.value);
+            updateDashboard();
+        });
+
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const today = new Date(2026, 2, 23);
+                switch(btn.dataset.preset) {
+                    case '7d':
+                        dashboardState.startDate = new Date(today);
+                        dashboardState.startDate.setDate(today.getDate() - 7);
+                        dashboardState.endDate = new Date(today);
+                        break;
+                    case 'mtd':
+                        dashboardState.startDate = new Date(2026, 2, 1);
+                        dashboardState.endDate = new Date(today);
+                        break;
+                    case '30d':
+                        dashboardState.startDate = new Date(today);
+                        dashboardState.startDate.setDate(today.getDate() - 30);
+                        dashboardState.endDate = new Date(today);
+                        break;
+                    case 'ytd':
+                        dashboardState.startDate = new Date(2026, 0, 1);
+                        dashboardState.endDate = new Date(today);
+                        break;
+                }
+
+                updateDateInputs();
+                updateDashboard();
+            });
+        });
+
+        document.querySelectorAll('.store-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                dashboardState.selectedStore = tab.dataset.store;
+                updateDashboard();
+            });
+        });
+
+        // ============ UPDATE FUNCTIONS ============
+
+        function updateDateInputs() {
+            const startStr = dashboardState.startDate.toISOString().split('T')[0];
+            const endStr = dashboardState.endDate.toISOString().split('T')[0];
+            document.getElementById('startDate').value = startStr;
+            document.getElementById('endDate').value = endStr;
+        }
+
+        function updateDashboard() {
+            updateKPICards();
+            updateCoachSection();
+            updateCharts();
+            updateDataTable();
+        }
+
+        function updateKPICards() {
+            const container = document.getElementById('kpiGrid');
+            container.innerHTML = '';
+
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+
+            const revenueIndices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+
+            for (const store of stores) {
+                const y26Values = revenueData[store].y26.slice(0, 84);
+                const y25Values = revenueData[store].y25.slice(0, 84);
+
+                const currentRevenue = revenueIndices.reduce((sum, idx) => sum + (y26Values[idx] || 0), 0);
+                const lastYearRevenue = revenueIndices.reduce((sum, idx) => sum + (y25Values[idx] || 0), 0);
+
+                const yoyChange = lastYearRevenue > 0 ? ((currentRevenue - lastYearRevenue) / lastYearRevenue * 100).toFixed(1) : 0;
+
+                const card = document.createElement('div');
+                card.className = 'kpi-card revenue';
+                card.innerHTML = `
+                    <div class="kpi-label">${store} 營收</div>
+                    <div class="kpi-value">NT$${(currentRevenue / 1000).toFixed(0)}K</div>
+                    <div class="kpi-change ${yoyChange >= 0 ? 'positive' : 'negative'}">
+                        ${yoyChange >= 0 ? '↑' : '↓'} 年增 ${Math.abs(yoyChange)}%
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+
+            const operationsMetrics = [
+                { key: 'txn', label: '總交易筆數' },
+                { key: 'delivery', label: '外送筆數' },
+                { key: 'addon', label: '加購蠟燭盤叉' },
+                { key: 'calcTxn', label: '計算用交易筆數' },
+                { key: 'avgPrice', label: '客單價' },
+                { key: 'newCust', label: '購買筆數(新客)' },
+                { key: 'oldCust', label: '購買筆數(舊客)' },
+                { key: 'counter', label: '靠櫃數' },
+                { key: 'checkin', label: '打地標' },
+                { key: 'second', label: '多帶第二件' },
+                { key: 'member', label: '綁會員' }
+            ];
+
+            for (const metric of operationsMetrics) {
+                let totalValue = 0;
+                let count = stores.length;
+
+                for (const store of stores) {
+                    const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+                    if (data) {
+                        totalValue += data[metric.key];
+                    }
+                }
+
+                const displayValue = count > 1 ? (totalValue / count).toFixed(0) : totalValue;
+                const unit = metric.key === 'avgPrice' ? 'NT$' : '';
+
+                const card = document.createElement('div');
+                card.className = 'kpi-card operations';
+                card.innerHTML = `
+                    <div class="kpi-label">${metric.label}</div>
+                    <div class="kpi-value">${unit}${displayValue}</div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function updateCoachSection() {
+            const container = document.getElementById('coachStores');
+            container.innerHTML = '';
+
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+
+            const today = new Date(2026, 2, 23);
+            const thisWeekEnd = new Date(today);
+            const thisWeekStart = new Date(thisWeekEnd);
+            thisWeekStart.setDate(thisWeekEnd.getDate() - 6);
+
+            const lastWeekEnd = new Date(thisWeekStart);
+            lastWeekEnd.setDate(thisWeekStart.getDate() - 1);
+            const lastWeekStart = new Date(lastWeekEnd);
+            lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
+
+            for (const store of stores) {
+                const thisWeekData = sumOperationsMetrics(store, thisWeekStart, thisWeekEnd);
+                const lastWeekData = sumOperationsMetrics(store, lastWeekStart, lastWeekEnd);
+
+                const coachCard = document.createElement('div');
+                coachCard.className = 'coach-card';
+
+                const improvements = [];
+                const declines = [];
+                const metrics = ['txn', 'newCust', 'counter', 'second', 'member'];
+                const improvedMetricsDisplay = ['交易筆數', '新客', '靠櫃', '多帶第二件', '會員綁定'];
+
+                for (let i = 0; i < metrics.length; i++) {
+                    const change = thisWeekData[metrics[i]] - lastWeekData[metrics[i]];
+                    const changePercent = lastWeekData[metrics[i]] > 0 ? ((change / lastWeekData[metrics[i]]) * 100).toFixed(0) : 0;
+
+                    if (change > 0) {
+                        improvements.push(`${improvedMetricsDisplay[i]}: +${changePercent}%`);
+                    } else if (change < 0) {
+                        declines.push(`${improvedMetricsDisplay[i]}: ${changePercent}%`);
+                    }
+                }
+
+                let score = 50;
+                score += improvements.length * 10;
+                score -= declines.length * 5;
+                score = Math.max(0, Math.min(100, score));
+
+                // 動態產生個人化建議：找出本週最弱的指標，給出具體行動方案
+                const taskSuggestions = {
+                    txn: {
+                        label: '交易筆數',
+                        actions: [
+                            `本週交易僅 ${thisWeekData.txn} 筆（上週 ${lastWeekData.txn} 筆），建議加強迎賓話術，主動邀請試吃提升成交率`,
+                            '午間 12-14 時與下午茶 15-17 時為黃金時段，集中人力做主動推薦'
+                        ]
+                    },
+                    newCust: {
+                        label: '新客開發',
+                        actions: [
+                            `新客僅 ${thisWeekData.newCust} 位（上週 ${lastWeekData.newCust} 位），建議每日設定新客目標 ${Math.ceil(lastWeekData.newCust / 7 * 1.1)} 位`,
+                            '對路過顧客主動遞試吃，搭配「第一次來嗎？推薦我們的招牌」話術破冰'
+                        ]
+                    },
+                    second: {
+                        label: '多帶第二件',
+                        actions: [
+                            `第二件僅 ${thisWeekData.second} 筆（上週 ${lastWeekData.second} 筆），結帳時主動推薦：「很多客人會再帶一個不同口味的喔」`,
+                            '將熱銷品與新品做組合推薦，提升搭售率'
+                        ]
+                    },
+                    member: {
+                        label: '會員綁定',
+                        actions: [
+                            `會員綁定僅 ${thisWeekData.member} 位（上週 ${lastWeekData.member} 位），結帳時務必詢問「需要幫您加入會員嗎？生日有優惠喔」`,
+                            '設定每日會員綁定目標 ${Math.ceil(lastWeekData.member / 7 * 1.1)} 位，用倒數計時激勵團隊'
+                        ]
+                    },
+                    counter: {
+                        label: '靠櫃數',
+                        actions: [
+                            `靠櫃數 ${thisWeekData.counter} 人（上週 ${lastWeekData.counter} 人），建議調整陳列位置、增加試吃攤位的可見度`,
+                            '善用香氣行銷，在亹流高峰時段加熱試吃品，吸引路過客人靠近'
+                        ]
+                    }
+                };
+
+                // 依下滑幅度排序，取前3個最需改善的指標
+                const metricChanges = metrics.map((key, idx) => {
+                    const change = thisWeekData[key] - lastWeekData[key];
+                    const pct = lastWeekData[key] > 0 ? (change / lastWeekData[key]) * 100 : 0;
+                    return { key, pct, change };
+                }).sort((a, b) => a.pct - b.pct);
+
+                const tasks = [];
+                const usedKeys = new Set();
+                for (const mc of metricChanges) {
+                    if (tasks.length >= 3) break;
+                    if (taskSuggestions[mc.key] && !usedKeys.has(mc.key)) {
+                        tasks.push(taskSuggestions[mc.key].actions[0]);
+                        usedKeys.add(mc.key);
+                    }
+                }
+
+                coachCard.innerHTML = `
+                    <h3>
+                        ${store}
+                        <span class="coach-score">${score}/100</span>
+                    </h3>
+
+                    <div class="coach-section">
+                        <div class="coach-subsection-title">📊 本週成績單</div>
+                        <div class="coach-content">
+                            <div class="coach-metric">
+                                <span class="metric-name">交易筆數:</span>
+                                <span>${thisWeekData.txn} 筆</span>
+                            </div>
+                            <div class="coach-metric">
+                                <span class="metric-name">新客購買:</span>
+                                <span>${thisWeekData.newCust} 筆</span>
+                            </div>
+                            <div class="coach-metric">
+                                <span class="metric-name">平均客單價:</span>
+                                <span>NT$${thisWeekData.avgPrice}</span>
+                            </div>
+                            <div class="coach-metric">
+                                <span class="metric-name">會員綁定:</span>
+                                <span>${thisWeekData.member} 筆</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${improvements.length > 0 ? `
+                    <div class="coach-section">
+                        <div class="coach-subsection-title">💪 做得好</div>
+                        <div class="coach-content">
+                            ${improvements.map(imp => `<div class="coach-metric"><span class="metric-positive">✓ ${imp}</span></div>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${declines.length > 0 ? `
+                    <div class="coach-section">
+                        <div class="coach-subsection-title">⚠️ 需要改善</div>
+                        <div class="coach-content">
+                            ${declines.map(dec => `<div class="coach-metric"><span class="metric-negative">✗ ${dec}</span></div>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="coach-section">
+                        <div class="coach-subsection-title">🎯 本週任務</div>
+                        <div class="coach-content">
+                            ${tasks.map((task, idx) => `<div class="coach-metric">${idx + 1}. ${task}</div>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="coach-section">
+                        <div class="coach-subsection-title">📊 重點KPI追蹤</div>
+                        <div class="coach-content">
+                            <div class="coach-metric">
+                                <span class="metric-name">客單價目標:</span>
+                                <span>NT$900+</span>
+                            </div>
+                            <div class="coach-metric">
+                                <span class="metric-name">新客轉化:</span>
+                                <span>${((thisWeekData.newCust / thisWeekData.counter) * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(coachCard);
+            }
+        }
+
+        function updateCharts() {
+            updateTrendChart();
+            updateCustomerChart();
+            updateRevenueChart();
+            updateRadarChart();
+        }
+
+        function updateTrendChart() {
+            const indices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const datasets = [];
+            const colors = ['#8B6914', '#C4A035', '#E5A876', '#A67C2E'];
+
+            const dates = [];
+            for (let i = 0; i < Math.min(30, indices.length); i++) {
+                const d = new Date(dashboardState.startDate);
+                d.setDate(d.getDate() + i);
+                dates.push(`${d.getMonth() + 1}/${d.getDate()}`);
+            }
+
+            for (let i = 0; i < stores.length; i++) {
+                const store = stores[i];
+                const range = getOperationsDataForRange(store, dashboardState.startDate, dashboardState.endDate);
+                const txnData = operationsData[store].txn.slice(range.startIdx, range.endIdx);
+
+                // 2026 今年實線
+                datasets.push({
+                    label: store + ' (2026)',
+                    data: txnData.slice(0, 30),
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length] + '20',
+                    tension: 0.3,
+                    fill: false,
+                    borderWidth: 2
+                });
+
+                // 2025 去年同期虛線
+                const y25Revenue = revenueData[store].y25.slice(0, 84);
+                const y25Slice = indices.slice(0, 30).map(idx => {
+                    // 將營收轉為近似交易筆數（營收/平均客單價800）方便同圖比較
+                    return idx < y25Revenue.length ? Math.round(y25Revenue[idx] / 800) : null;
+                });
+                datasets.push({
+                    label: store + ' (2025)',
+                    data: y25Slice,
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    fill: false,
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0
+                });
+            }
+
+            if (window._trendChartInst) {
+                window._trendChartInst.destroy();
+            }
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            window._trendChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCustomerChart() {
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const newCustData = [];
+            const oldCustData = [];
+
+            for (const store of stores) {
+                const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+                newCustData.push(data.newCust);
+                oldCustData.push(data.oldCust);
+            }
+
+            if (window._customerChartInst) {
+                window._customerChartInst.destroy();
+            }
+
+            const ctx = document.getElementById('customerChart').getContext('2d');
+            window._customerChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: stores,
+                    datasets: [
+                        {
+                            label: '新客',
+                            data: newCustData,
+                            backgroundColor: '#8B6914'
+                        },
+                        {
+                            label: '舊客',
+                            data: oldCustData,
+                            backgroundColor: '#C4A035'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false
+                        },
+                        y: {
+                            stacked: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRevenueChart() {
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const indices = getIndicesForDateRange(dashboardState.startDate, dashboardState.endDate);
+            const revenueValues = [];
+
+            for (const store of stores) {
+                const y26Values = revenueData[store].y26.slice(0, 84);
+                const revenue = indices.reduce((sum, idx) => sum + (y26Values[idx] || 0), 0);
+                revenueValues.push(revenue);
+            }
+
+            if (window._revenueChartInst) {
+                window._revenueChartInst.destroy();
+            }
+
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            window._revenueChartInst = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: stores,
+                    datasets: [{
+                        data: revenueValues,
+                        backgroundColor: ['#8B6914', '#C4A035', '#E5A876', '#A67C2E']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRadarChart() {
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const datasets = [];
+            const colors = ['#8B6914', '#C4A035', '#E5A876', '#A67C2E'];
+
+            for (let i = 0; i < stores.length; i++) {
+                const store = stores[i];
+                const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+
+                const avgPrice = data.avgPrice / 10;
+                const newCustRate = (data.newCust / (data.newCust + data.oldCust)) * 100;
+                const oldCustRate = (data.oldCust / (data.newCust + data.oldCust)) * 100;
+                const counterConvRate = (data.counter / (data.txn + 1)) * 100;
+                const secondRate = (data.second / (data.txn + 1)) * 100;
+                const memberRate = (data.member / (data.txn + 1)) * 100;
+
+                datasets.push({
+                    label: store,
+                    data: [
+                        Math.min(100, avgPrice),
+                        newCustRate,
+                        oldCustRate,
+                        counterConvRate,
+                        secondRate,
+                        memberRate
+                    ],
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length] + '30',
+                    borderWidth: 2
+                });
+            }
+
+            if (window._radarChartInst) {
+                window._radarChartInst.destroy();
+            }
+
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            window._radarChartInst = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['客單價 (NT$/10)', '新客率 (%)', '舊客率 (%)', '靠櫂轉換 (%)', '第二件率 (%)', '會員率 (%)'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDataTable() {
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const headerRow = document.getElementById('tableHeader');
+            const bodyRows = document.getElementById('tableBody');
+
+            headerRow.innerHTML = '<th style="width: 200px;">指標</th>';
+            for (const store of stores) {
+                const th = document.createElement('th');
+                th.textContent = store;
+                headerRow.appendChild(th);
+            }
+
+            bodyRows.innerHTML = '';
+
+            const metrics = [
+                { key: 'txn', label: '總交易筆數' },
+                { key: 'delivery', label: '外送筆數' },
+                { key: 'addon', label: '加購蠟燭盥叉' },
+                { key: 'calcTxn', label: '計算用交易筆數' },
+                { key: 'avgPrice', label: '客單價 (NT$)' },
+                { key: 'newCust', label: '新客購買筆數' },
+                { key: 'oldCust', label: '舊客購買筆數' },
+                { key: 'counter', label: '靠櫃數' },
+                { key: 'checkin', label: '打地標' },
+                { key: 'second', label: '多帶第二件' },
+                { key: 'member', label: '綁會員' }
+            ];
+
+            for (const metric of metrics) {
+                const row = document.createElement('tr');
+                const labelCell = document.createElement('td');
+                labelCell.className = 'table-metric-name';
+                labelCell.textContent = metric.label;
+                row.appendChild(labelCell);
+
+                for (const store of stores) {
+                    const data = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+                    const cell = document.createElement('td');
+                    cell.textContent = data[metric.key];
+                    row.appendChild(cell);
+                }
+
+                bodyRows.appendChild(row);
+            }
+        }
+
+        // ============ AI CHAT ============
+
+        const chatMessages = [];
+
+        function handleChatSubmit() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            chatMessages.push({ role: 'user', content: message });
+            displayChatMessage(message, 'user');
+            input.value = '';
+
+            const response = generateAIResponse(message);
+            chatMessages.push({ role: 'assistant', content: response });
+            setTimeout(() => displayChatMessage(response, 'assistant'), 500);
+        }
+
+        function displayChatMessage(message, role) {
+            const container = document.getElementById('chatContainer');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${role}`;
+            msgDiv.textContent = message;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generateAIResponse(question) {
+            const stores = getStoresForOperations(dashboardState.selectedStore);
+            const storeDataMap = {};
+            for (const store of stores) {
+                storeDataMap[store] = sumOperationsMetrics(store, dashboardState.startDate, dashboardState.endDate);
+            }
+
+            const q = question;
+            const ql = q.toLowerCase();
+
+            // 偵測使用者提到的門市
+            let userStore = null;
+            const storeTypes = {};
+            for (const s of ['京站','東橋','西門','A11']) {
+                if (q.includes(s)) userStore = s;
+            }
+            // 門市屬性
+            storeTypes['京站'] = { type: '百貨櫃位', trait: '百貨商奴內，客流穩定但需與同樓層競品搶客', foot: '依賴商場自然人流與樓層導引' };
+            storeTypes['東橋'] = { type: '街邊店', trait: '獨立街邊店面，需靠自身吸引力拉客入店', foot: '依賴路過行人，受天氣、時段影響大' };
+            storeTypes['西門'] = { type: '街邊店（覀光商圈）', trait: '西門町觀光人潮大，年輕客群與觀光客為主', foot: '人潮極大但停留意願需靠吸引力' };
+            storeTypes['A11'] = { type: '百貨櫃位', trait: '信義區百貨，客單價潛力高，客群消費力強', foot: '依賴百貨動線與活動檔期帶動' };
+
+            const storeInfo = userStore ? storeTypes[userStore] : null;
+            const storeData = userStore ? storeDataMap[userStore] : null;
+
+            // ===== 知識庫：店長實戰教練 =====
+
+            // 多帶第二件 / 搭售 / 加購
+            if (ql.includes('第二件') || ql.includes('搭售') || ql.includes('加購') || ql.includes('併買') || ql.includes('多買')) {
+                let tips = `【多帶第二件 — 實戰攻略】\n\n`;
+                tips += `🎯 核心話術（結帳前黃金 10 秒）：\n`;
+                tips += `① 「很多客人都會再帶一個不同口味回去，家人可以一起吃！」\n`;
+                tips += `② 「這款是我們本週新品，跩您遼的很搭，要不要一起帶？」\n`;
+                tips += `③ 「買兩個現折 $30，今天最划算喔！」\n\n`;
+                tips += `📋 執行步驟：\n`;
+                tips += `• 每日晨會指定「搭售主推組合」（如：經典原味＋季節限定）\n`;
+                tips += `• 收鉠台旁放第二件推薦品的 POP 立牌\n`;
+                tips += `• 設定每日第二件目標筆數，每 2 小時回報進度\n`;
+                tips += `• 對猶豫的客人加碼：「這個送禮也很適合，我幫您包起來？」\n\n`;
+                if (storeData) {
+                    tips += `📊 ${userStore} 目前數據：第二件 ${storeData.second} 筆 / 交易 ${storeData.txn} 筆，搭售率 ${(storeData.second / (storeData.txn || 1) * 100).toFixed(1)}%\n`;
+                    tips += `🎯 建議目標：搭售率提升至 ${(storeData.second / (storeData.txn || 1) * 100 + 5).toFixed(0)}%（每日多推 ${Math.max(1, Math.ceil(storeData.txn * 0.05 / 7))} 筆）`;
+                }
+                return tips;
+            }
+
+            // 客單價
+            if (ql.includes('客單價') || ql.includes('單價') || ql.includes('平均消費') || ql.includes('提升金額')) {
+                let tips = `【提升客單價 — 實戰攻略】\n\n`;
+                tips += `🎯 三大策略：\n`;
+                tips += `① 升級推薦：客人選小的 → 「大的每克更划算，而且份量剣好夠全家吃！」\n`;
+                tips += `② 組合銷售：「我們有禮盒組合，比單買省 $60，送禮超有面子」\n`;
+                tips += `③ 加僼購：「加 $49 可以多一個小塔，今天限定喔」\n\n`;
+                tips += `📋 執行步驟：\n`;
+                tips += `• 主推高單價員項（禮盒、大尺寸），放在視線最佳位置\n`;
+                tips += `• 結帳時先報高價組合，再提供替代方案（錨定效應）\n`;
+                tips += `• 每週分析熱賣品 TOP3（設計「搭配推薦組合」話�S卣\n`;
+                tips += `• 下午茶時段推「蛋糕＋飲品」套餐，拉高每筆消費\n\n`;
+                if (storeData) {
+                    const allAvg = stores.map(s => storeDataMap[s].avgPrice);
+                    const maxAvg = Math.max(...allAvg);
+                    const maxStore = stores[allAvg.indexOf(maxAvg)];
+                    tips += `📊 ${userStore || '全店'} 目前客單價：NT$${storeData ? storeData.avgPrice : '-'}\n`;
+                    tips += `🏆 目前最高：${maxStore} NT$${maxAvg}\n`;
+                    tips += `🎯 建議目標：客單價提升 10% 至 NT$${Math.ceil((storeData ? storeData.avgPrice : maxAvg) * 1.1)}`;
+                } else {
+                    const allAvg = stores.map(s => storeDataMap[s].avgPrice);
+                    const maxAvg = Math.max(...allAvg);
+                    const maxStore = stores[allAvg.indexOf(maxAvg)];
+                    tips += `📊 各店客單價：${stores.map(s => s + ' NT$' + storeDataMap[s].avgPrice).join('、')}\n`;
+                    tips += `🏆 最高：${maxStore} NT$${maxAvg}`;
+                }
+                return tips;
+            }
+
+            // 來客數 / 靠櫃 / 人流
+            if (ql.includes('來客') || ql.includes('靠櫃') || ql.includes('人流') || ql.includes('吸引客人') || ql.includes('沒人')) {
+                let tips = `【提升來客數/靠櫃數 — 實戰攻略】\n\n`;
+                if (storeInfo && (storeInfo.type.includes('街邊'))) {
+                    tips += `🏪 ${userStore}（${storeInfo.type}）專屬策略：\n`;
+                    tips += `① 門口香氣行銷：在人流高峰（12-14 時、17-19 時）加熱試吃品，讔香味飄出店外\n`;
+                    tips += `② 門面吸引力：A 型立牌放在人行道，寫上「免費話吃」＋當日特惠\n`;
+                    tips += `③ 主動攬客：安排一位夫伴站門口，手持試吃盤，微笑招呼「要不要試吃看看？」\n`;
+                    tips += `④ 外送平台曝光：上架 UberEats / Foodpanda 增加線上能見度，帶動品牌認知\n`;
+                    if (userStore === '東橋') {
+                        tips += `⑤ 東橋特別建議：街邊店受天氣影響大，雨天可推「外退免運」活動，確保業績不中斷\n`;
+                    }
+                    if (userStore === '西門') {
+                        tips += `⑤ 西門特別建議：觀光客多，準備日文/英文 POP 與小份試吃包，降低觀光客購買門檻\n`;
+                    }
+                } else if (storeInfo && storeInfo.type.includes('百貨')) {
+                    tips += `🏬 ${userStore}（${storeInfo.type}）專屬策略：\n`;
+                    tips += `① 配合百貨活動：每檔百貨促銷都要參與，爭取電子看板、DM 版位曝光\n`;
+                    tips += `② 樓層小流：與同樓層非競品櫃位互相推薦（如餐廳結帳時放我們的 DM）\n`;
+                    tips += `③ 話吃站前移：話吃台盡量靠走道，攔截路過人流\n`;
+                    tips += `④ 會員日加碼：百貨會員日推專屬優惠，提前用 LINE 通知熟客回櫃\n`;
+                    if (userStore === 'A11') {
+                        tips += `⑤ A11 特別建議：信義區消費力高，主控妮盒與高單價品項，搭配精緻包裝提升質感\n`;
+                    }
+                } else {
+                    tips += `🎯 通用策略：\n`;
+                    tips += `① 門口香氣行銷：加熱話吃品讓香味飄散，吸引路過客人\n`;
+                    tips += `② 主動遞試吃：「您好，免費試吃我們的招牌起士蛋糕！」\n`;
+                    tips += `③ 善用 LINE 推播：對舊客發送限時優惠，吸引回店\n`;
+                    tips += `④ Google 地圖優化：確保營業資訊正確，鼓勵客人留好評\n`;
+                }
+                tips += `\n📋 每日必做：\n`;
+                tips += `• 開店前確認門面整潔、燈光明亮、話吃品備妥\n`;
+                tips += `• 記錄每小時靠櫃數，找出人流低谷時段加強攬客\n`;
+                tips += `• 每日目標公告在員工休息區，隨時可見\n\n`;
+                if (storeData) {
+                    tips += `📊 ${userStore} 目前靠櫃數：${storeData.counter} 人 / 成交 ${storeData.txn} 筆，轉換率 ${(storeData.txn / (storeData.counter || 1) * 100).toFixed(1)}%`;
+                }
+                return tips;
+            }
+
+            // 新客開發
+            if (ql.includes('新客') || ql.includes('拉新') || ql.includes('新顧客') || ql.includes('開發客')) {
+                let tips = `【新客開發 — 實戰攻略】\n\n`;
+                tips += `🎯 破冰三步驟：\n`;
+                tips += `① 試吃引流：「您好！要免費試吃我們得獎的起士蛋糕嗎？」\n`;
+                tips += `② 品牌故事：「我們是台南起家的手工蛋糕，用法國進叢起士製作，零添加喔」\n`;
+                tips += `③ 首購優惠：「第一次購買打 9 折 / 加入 LINE 好友現折 $50」\n\n`;
+                tips += `📋 執行步驟：\n`;
+                tips += `• 每位新客結帳時邀請加 LINE 好友（掃碼立折）\n`;
+                tips += `• 週末在店門口加設試吃推廣區，安排專人解說\n`;
+                tips += `• 與附近商家異業合作，互放 DM（咘ehyn��� z"�yn���b{�"W�\�
+�H8�(�:o$�b�y����#�k��.����y�i��d�ch{�#:` yl#�*lyd �d�y/g9ஹf�ib���Y�
+�ܙQ]JH\�
+�H<'��	�\�\��ܙ_H9��bcy��9k���&���ܙQ]K��]��\�H9/cH�:""�k���&���ܙQ]K���\�H9/cW�\�
+�H<'��9��9k��/e9��;�&���ܙQ]K��]��\��
+�ܙQ]K��]��\�
+��ܙQ]K���\�JH
+�L
+K�њ^Y
+J_IW�\�
+�H<'��9n�+l9�빪&{�&������y��9h��	�X]�X^
+KX]��Z[
+�ܙQ]K��]��\�
+�K�MH�
+�J_H9/cy��9k��B��]\��\�B����9� �d�y��yk���Y�
+[�[��Y\�	�� �d�I�H[�[��Y\�	���yk���H[�[��Y\�	�S�I�H[�[��Y\�	�o�:*�	�JH]\�H8�$9� �d�y��yk��8�%9k鹢,9�.��ix�$W��\�
+�H<'��:n��a�z*lz(d��"9�d9n,��`��"{�&��\�
+�H8�h8�#9nj���9b�9aiy� �d�{�#9�'���y�m��"9�"zjf�e�9a*���9e�;� x�#W�\�
+�H8�hH8�#9���`&y`"�T���H9b�S�H9ioyc���#9��g*:i�9."���	
+L;� x�#W�\�
+�H8�h�8�#9� �d�y�j9.����9d�ya*�ab:*i�d ��#9o�9i&���k��`�yb�9aiy.���#W��\�
+�H<'���9g��(c9�izjg��&��\�
+�H8�(�9�-�b�9c�9�/�T���H9����c;�#9�d9n,��`�L	H9ec���yk���#�hfW�\�
+�H8�(�:*+yk�������y��yk���빪&{�#9����9l#��`�g*9�9�a9f�h,z`,�n���\�
+�H8�(�9���`,y�*S�H9��9��y. 9�({�&���9d�zh$9db��:fd9�`�a*����9� �d�yl"9lk�\�
+�H8�(�9� �d�yf�,�9�`�c��h+y�'�+'{�&��#9�hz/�f�/��� y.�i*y�"y� �d�yl"9lk9��9c��dl�e�8�#W��Y�
+�ܙQ]JH\�
+�H<'��	�\�\��ܙ_H9��bcy��yk���&���ܙQ]K�Y[X�\�H9/cW�\�
+�H<'��9n�+l9�빪&{�&������y��yk��	�X]�X^
+KX]��Z[
+�ܙQ]K�Y[X�\�
+�K���
+�J_H9/cXB��]\��\�B����9.�9�$��a��n�9�$9.�9���:/by����Y�
+[�[��Y\�	��$9.�	�H[�[��Y\�	�/by����H[�[��Y\�	�.�9�$��H[�[��Y\�	��$9e���H[�[��Y\�	��ky�)��JH]\�H8�$9��9ca��$9.�9��8�%9k鹢,9�.��ix�$W��\�
+�H<'��9�$9.�9f���iy��{�&��\�
+�H8�h:/�,���-9a�;�&�o���${�"��/9�g���z)�;�"��#9�hz/�abz!�:-m�h��ak9�-{� z)�z*lyd ��"��"�e��'��#W�\�
+�H8�hH:g 9�`����*h��&��#9�+�!�m�yd �`�9�+�` y.��dh��'��#x���9��:%��l#y��yd�zh!W�\�
+�H8�h�9`�y`/9hdz`(;�&��#:`&y�/��*9��yg"�`,�c��-m�h���#:`(��y."ynm9o���c��#W�\�
+�H8�h�:!�:e�9. :!l��&��#9.�i*yn-�-l9� 9��:k���#9a��%��c��.�y�/�
+H9i*ye�8�#W��\�
+�H<'���9�����yg��(c;�&��\�
+�H8�(�9�j9� ��%9��:*lz(d�
+H9b!�d&;�"9���.��/*��`y�(y��9. 9�(zb��e+���yh���"W�\�
+�H8�(�:/�z.i9���l#��`��$9.�9�a��n;�#9/c���9nl�ga��`����cl�*���m9�e��iW�\�
+�H8�(�:*i�d �/by���/�z.i;�&�*&:c!:*i�d �.���n��:,�:,��.���n;�#9�o�a 9/l��`���W�\�
+�H8�(�9�*��$9.�9k��.��b!���;�&��#9ஹ.�:n�9���,���'��#x���9`�y�/;�'�c��dl��'����:a�yl#y�.ye���Y�
+�ܙQ]JH\�
+�H<'��	�\�\��ܙ_H9.�9�$�	��ܙQ]K��H9�a��:gh9���	��ܙQ]K���[�\�H9.���#9�$9.�9��	��ܙQ]K���
+�ܙQ]K���[�\�JH
+�L
+K�њ^Y
+J_IW�\�
+�H<'��9n�+l9�빪&{�&��$9.�9����9ca�!��	�X]�Z[�L
+�ܙQ]K���
+�ܙQ]K���[�\�JH
+�L
+�
+JJK�њ^Y
+
+_IXB��]\��\�B����9i%�` B�Y�
+[�[��Y\�	�i%�` I�H[�[��Y\�	�[]�\�I�H[�[��Y\�	�X�\��H[�[��Y\�	ٛ��[�I�H[�[��Y\�	�i%�n-��JH]\�H8�$9i%�` y�ky�/���9ca�8�%9k鹢,9�.��ix�$W��\�
+�H<'��9."yi)���yd${�&��\�
+�H8�h9nl�c�9a*�c%��&���9��:#�9e���i��a��":j�9�j�,�� M
+yn��)乢�y�'{�"x� yk��d.9o%y.���9d�zh!y���/��\�
+�H8�hH9�`���y/��b���&�cb:i$;�!�."�cb:#-��`���z*+yk��nl�c�:fd9�`���9�h��#9�-y/e9���d#W�\�
+�H8�h�9ioz*ey�������&�c!z(�yai��/��'�+'yl#�ch{�"��#9.�9�'�ioz*ez` y��9`�yb.8�#yo%yl#���\�
+�H<'���9g��(c9�izjg��&��\�
+�H8�(�9���`,y�����ynl�c�9���d#z"!�*eyb!��#9/c���
+�H9�'����chz(�y�!�m�*eW�\�
+�H8�(�9i%�` yc!z(�y讹/�z&����yk�9io{�"9b�9f�k��h��� y/�ya��(���"W�\�
+�H8�(�:f�9i*y..�b�ze��eg�i%�` yacz`b��.�b�{�#9oc:(�9b,9n��.���`y."���W�Y�
+�ܙQ]JH\�
+�H�'��	�\�\��ܙ_H9i%�` y�a��n;�&���ܙQ]K�[]�\�_H9�a�B��]\��\�B����9�d�g,9�&H�9�d�chB�Y�
+[�[��Y\�	��d�chI�H[�[��Y\�	�g,9�&I�H[�[��Y\�	��d�g,9�&I�H[�[��Y\�	��X��[��H[�[��Y\�	�����I�JH]\�H8�$9�d�g,9�&K��d�chH8�%9k鹢,9�.��ix�$W��\�
+�H<'��9ஹ.�:n�:a�z)�{�&�����H9g,9g%�*ez*幦+���9k���o�b,9�$y`$y�:e�:cmyaiyc��� W��\�
+�H<'���9g��(c9�izjg��&��\�
+�H8�h9�d9n,�o�:`�:*���&��#9i����9��9e���h{�#9nj��$y`$yg*����H9�fy`"�ioz*e{�#9."��(y/��` yl#�*i�d �� x�#W�\�
+�H8�hH9n��ai��/�T���H9����c:`(��d����H:*ez*�h zgh��\�
+�H8�h�:*+yk�����`,y�d�chy�빪&{�"9i��L9ba��"{�#:`e9�&yg&:f���"yl#��c�b�W�\�
+�H8�h�9f�)�����. 9ba�����H:*ez*��"9ioz*ey�'�+'x� ym�*ez*�9���`d��by.)��.ye�;�"W��Y�
+�ܙQ]JH\�
+�H<'��	�\�\��ܙ_H9�d�g,9�&{�&���ܙQ]K��X��[�H9�(XB��]\��\�B����9�����H�9.��b���9.��d�y�y�!��Y�
+[�[��Y\�	������I�H[�[��Y\�	�.��b���H[�[��Y\�	�.���b��H[�[��Y\�	�.��.#yi(	�H[�[��Y\�	�o�y.#z`c�/���JH]\�H8�$9.��b��*��acH8�%9k鹢,9�.��ix�$W��\�
+�H<'���9c��ba��&����.��b��f�.+yg*:j�9�(�a`���W�\�
+�H8�(�9b!���9���l#��`�.�9�$��n9���#9�o�a��#:n��a�y�`���x�#{�":`&�n.9�+�L�LM9�`�� LM�LNH9�`��"W�\�
+�H8�(�:n��a�y�`���9aj9d�y."����#9/c�l�9�`���z/*��`y/$y�k�� z(�:,�8� y�!y�e�\�
+�H8�(�:`,y�*�c�`a���y��9bcyk�y���b�9��y.��b���#9.#z)�y�m�i*y�cz*���\�
+�H8�(�:*+yk���#9. 9.��i&� �x�#yg�z*$��&����/cyi+�/-:`�z �y�-�b�;�"�*lyd ���:%���"�c!z(�W��\�
+�H<'�H9l#���9m���&�/c�l�9�`���9.#y�+��#9���.��`f��#y�9�`�e���#: #9�+�`f�.�y."�.����{�&��\�
+�H8�(�9�m9�!�fl�b%�� z(�:,�8� y�!y�e�\�
+�H8�(�9���`�y."�. 9��j�9l�9�:*lyd �d�W�\�
+�H8�(�9��9��*lz(d�� yf�hi�.⹥�y�n9���]\��\�B����:`&��*9ec�hc8�%9f%�*i��n� �yc.zacB�Y�
+\�\��ܙH	���ܙR[���H]\�H8�$	�\�\��ܙ_{�"	��ܙR[��˝\_{�"yn��em��!�ce��$W��\�
+�H<'��:e�9n ��ny�)��&���ܙR[��˝�Z]W�\�
+�H<'�h�9/��k���ny�)��&���ܙR[��˙���W��\�
+�H<'��9��bcy�.9o���n9���&��\�
+�H8�(�9.�9�$��a��n;�&���ܙQ]K��H9�a��\�
+�H8�(�9k��e��`�{�&��			��ܙQ]K�]���X�_W�\�
+�H8�(�9��9k���&���ܙQ]K��]��\�H9/cH�:""�k���&���ܙQ]K���\�H9/cW�\�
+�H8�(�:gh9����n;�&���ܙQ]K���[�\�H9.���\�
+�H8�(�9i&�n-��+9.�9.���&���ܙQ]K��X�ۙH9�a��\�
+�H8�(�9� �d�y��yk���&���ܙQ]K�Y[X�\�H9/cW��\�
+�H<'�H9��9c��.�yec��$y��9am�j�9�9ec�hc;�#9/��i���&��\�
+�H8�#9i��/ey��9ca�k��e��`�x�#x�#9i��/eyi&�n-��+9.�9.���#x�#9i��/ey��y��9k���#x�#9i��/ey��9ca�/��k���n8�#x�#9i��/ey��:j�9� �d�y��yk���#x�#9i��/ey��9ca��$9.�9���#x�#9i��/ez(gyi%�` x�#X�]\��\�B����:h$:*+yf�)��8�%9o%yl#�/o��*�]\�H<'�b�9�$y�+�/h9�RH9���`b��fy��{� yc��.�yec��$y.�y."�ec�hc;�&���\�
+�H<'��9��9ca���9m���&��\�
+�H8�(�8�#9i��/eyi&�n-��+9.�9.���#W�\�
+�H8�(�8�#9i��/ey��9ca�k��e��`�x�#W�\�
+�H8�(�8�#9i��/ey��9ca�/��k���n8�#y�%��#9i��/ey��9ca�gh9����n8�#W�\�
+�H8�(�8�#9i��/eze���o9��9k���#W�\�
+�H8�(�8�#9i��/ey��:j�9� �d�y��yk���#W�\�
+�H8�(�8�#9i��/ey��9ca��$9.�9���#W�\�
+�H8�(�8�#9i��/ez(gyi%�` y�my�+��#W�\�
+�H8�(�8�#9�d�chK��d�g,9�&y�#�n�9��8�#W��\�
+�H<'��9�!�k��e�9n ��&��\�
+�H8�(�8�#9�$y�+��ly�b�(e�`��n���#9i��/ey��9ca�/��k���n8�#W�\�
+�H8�(�8�#9.�9��yi��/ey��zj�9k��e��`�x�#W�\�
+�H8�(�8�#LLH9�#�n�9��9� �d�x�#W��\�
+�H:*e�*ey��9d)�� X�]\��\�B��// ============ INITIALIZATION ============
+
+        window.addEventListener('load', () => {
+            updateDateInputs();
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>起士公爵 四店門市營運儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans CJK TC', sans-serif;
+            background: linear-gradient(135deg, #5C4510 0%, #3D2D0B 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #8B6914 0%, #A67C2E 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        /* Controls Section */
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            min-width: 60px;
+        }
+
+        .control-group input[type="date"] {
+            padding: 8px 12px;
+            border: 2px solid #C4A035;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-btn {
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .quick-btn:hover,
+        .quick-btn.active {
+            background: #8B6914;
+            color: white;
+            border-color: #8B6914;
+        }
+
+        /* Store Tabs */
+        .store-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .store-tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.9);
+            border: 2px solid #C4A035;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #8B6914;
+            transition: all 0.3s ease;
+        }
+
+        .store-tab:hover {
+            background: #C4A035;
+            color: white;
+        }
+
+        .store-tab.active {
+            background: #8B6914;
+            color: white;
+            border-color: #8B6914;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 4px solid #8B6914;
+        }
+
+        .kpi-card.revenue {
+            border-left-color: #C4A035;
+        }
+
+        .kpi-card.operations {
+            border-left-color: #8B6914;
+        }
+
+        .kpi-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #8B6914;
+            margin-bottom: 5px;
+        }
+
+        .kpi-change {
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .kpi-change.positive {
+            color: #22c55e;
+        }
+
+        .kpi-change.negative {
+            color: #ef4444;
+        }
+
+        /* AI Coach Section */
+        .ai-coach-section {
+            background: linear-gradient(135deg, #fff5e6 0%, #fffbf0 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 2px solid #C4A035;
+        }
+
+        .ai-coach-header {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #8B6914;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .coach-stores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .coach-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid #8B6914;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .coach-card h3 {
+            font-size: 1.3em;
+            color: #8B6914;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coach-score {
+            background: #8B6914;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+
+        .coach-section {
+            margin-bottom: 15px;
+        }
+
+        .coach-subsection-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+        }
+
+        .coach-content {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .coach-metric {
+            margin: 5px 0;
+            padding: 5px 0;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .metric-change {
+            font-weight: 700;
+        }
+
+        .metric-positive {
+            color: #22c55e;
+        }
+
+        .metric-negative {
+            color: #ef4444;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-container h3 {
+            color: #8B6914;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .chart-inner {
+            position: relative;
+            height: 100%;
+        }
+
+        /* Data Table */
+        .table-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .table-section h3 {
+            color: #8B6914;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead {
+            background: #8B6914;
+            color: white;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        .table-metric-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* AI Chat */
+        .chat-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .chat-section h3 {
+            color: #8B6914;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .chat-container {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            height: 250px;
+            overflow-y: auto;
+            border: 2px solid #eee;
+        }
+
+        .chat-message {
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 6px;
